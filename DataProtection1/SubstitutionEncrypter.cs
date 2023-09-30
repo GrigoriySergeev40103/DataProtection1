@@ -28,6 +28,7 @@ namespace DataProtection1
 		public SubstitutionEncrypter(EncrypterData encrypterData)
 		{
 			_encryptionData = encrypterData;
+
 			var enumerator = _encryptionData.Map.Keys.GetEnumerator();
 			enumerator.MoveNext();
 			_blockLength = enumerator.Current.Length;
@@ -42,10 +43,10 @@ namespace DataProtection1
 				_ => toEncrypt + new string(_encryptionData.FillerChar, _blockLength - remainder)
 			};
 
-			StringBuilder encryptedString = new(sourceText.Length);
+			Span<char> encryptedString = stackalloc char[sourceText.Length];
 
 			for (int i = 0; i < sourceText.Length; i += _blockLength)
-				encryptedString.Append(_encryptionData.Map[sourceText[i..(i + _blockLength)]]);
+				_encryptionData.Map[sourceText[i..(i + _blockLength)]].CopyTo(encryptedString.Slice(i, i + _blockLength));
 
 			return encryptedString.ToString();
 		}
