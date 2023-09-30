@@ -79,7 +79,7 @@ namespace DataProtection1
 			DataContext = this;
 
 			SubstitutionEncrypter substitutionEncrypter = new(new SubstitutionEncrypter.EncrypterData { Map = EncryptionMap, FillerChar = 'x'});
-			substitutionEncrypter.Encrypt("xxxxx");
+			string str = substitutionEncrypter.Decrypt(substitutionEncrypter.Encrypt("xxxxx"));
 			substitutionEncrypter.SaveToFile(filePath);
 
 			InitializeComponent();
