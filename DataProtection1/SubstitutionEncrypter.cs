@@ -21,6 +21,9 @@ namespace DataProtection1
 		protected EncrypterData _encryptionData;
 		protected int _blockLength;
 
+		public EncrypterData EncryptionData => _encryptionData;
+		public object Representer => _encryptionData;
+
 		public SubstitutionEncrypter(string fileName)
 		{
 			LoadFromFile(fileName);
@@ -46,7 +49,7 @@ namespace DataProtection1
 			Span<char> encryptedString = stackalloc char[sourceText.Length];
 
 			for (int i = 0; i < sourceText.Length; i += _blockLength)
-				_encryptionData.Map[sourceText[i..(i + _blockLength)]].CopyTo(encryptedString.Slice(i, i + _blockLength));
+				_encryptionData.Map[sourceText[i..(i + _blockLength)]].CopyTo(encryptedString.Slice(i, _blockLength));
 
 			return encryptedString.ToString();
 		}
@@ -65,7 +68,7 @@ namespace DataProtection1
 			for (int i = 0; i < encryptedText.Length; i += _blockLength)
 			{
 				string decrypted = _encryptionData.Map.First(x => x.Value == encryptedText[i..(i + _blockLength)]).Key;
-				decrypted.CopyTo(decryptedString.Slice(i, i+ _blockLength));
+				decrypted.CopyTo(decryptedString.Slice(i, _blockLength));
 			}
 
 			return decryptedString.ToString();
@@ -75,7 +78,9 @@ namespace DataProtection1
 		{
 			string jsonContent = File.ReadAllText(fileName);
 			_encryptionData = JsonSerializer.Deserialize<EncrypterData>(jsonContent);
-			_blockLength = _encryptionData.Map.Keys.GetEnumerator().Current.Length;
+			var enumerator = _encryptionData.Map.Keys.GetEnumerator();
+			enumerator.MoveNext();
+			_blockLength = enumerator.Current.Length;
 		}
 		public void SaveToFile(string fileName)
 		{

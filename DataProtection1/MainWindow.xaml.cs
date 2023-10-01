@@ -58,8 +58,6 @@ namespace DataProtection1
 
 		public MainWindow()
 		{
-			string filePath = "cock";
-
 			OpenFileDialog openFileDialog = new()
 			{
 				Filter = "json files (*.json)|*.json",
@@ -69,18 +67,14 @@ namespace DataProtection1
 			if (openFileDialog.ShowDialog() == true)
 			{
 				//Get the path of specified file
-				filePath = openFileDialog.SafeFileName;
-				//SubstitutionEncrypter substitutionEncrypter = new(filePath);
+				string filePath = openFileDialog.SafeFileName;
+				_encrypter = new SubstitutionEncrypter(filePath);
 			}
 			else
 				Close();
 
 			FormEncryptionMap();
 			DataContext = this;
-
-			SubstitutionEncrypter substitutionEncrypter = new(new SubstitutionEncrypter.EncrypterData { Map = EncryptionMap, FillerChar = 'x'});
-			string str = substitutionEncrypter.Decrypt(substitutionEncrypter.Encrypt("xxxxx"));
-			substitutionEncrypter.SaveToFile(filePath);
 
 			InitializeComponent();
 		}
@@ -93,43 +87,6 @@ namespace DataProtection1
 
 			for (int i = 0; i < permutations.Length; i++)
 				EncryptionMap.Add(permutations[i], shuffled[i]);
-		}
-
-		protected string Encrypt(string toEncrypt)
-		{
-			int remainder = toEncrypt.Length % _blockLength;
-			string sourceText = remainder switch
-			{
-				0 => toEncrypt,
-				_ => toEncrypt + new string(_alphabet[0], _blockLength - remainder)
-			};
-
-			StringBuilder encryptedString = new(sourceText.Length);
-
-			for (int i = 0; i < sourceText.Length; i += _blockLength)
-				encryptedString.Append(EncryptionMap[sourceText[i..(i + _blockLength)]]);
-
-			return encryptedString.ToString();
-		}
-
-		protected string Decrypt(string toDecrypt)
-		{
-			int remainder = toDecrypt.Length % _blockLength;
-			string encryptedText = remainder switch
-			{
-				0 => toDecrypt,
-				_ => toDecrypt + new string(_alphabet[0], _blockLength - remainder)
-			};
-
-			StringBuilder decryptedString = new(encryptedText.Length);
-
-			for (int i = 0; i < encryptedText.Length; i += _blockLength)
-			{
-				string decrypted = EncryptionMap.First(x => x.Value == encryptedText[i..(i + _blockLength)]).Key;
-				decryptedString.Append(decrypted);
-			}
-
-			return decryptedString.ToString();
 		}
 
 		private void SourceTextChanged(object sender, TextChangedEventArgs e)
@@ -155,7 +112,7 @@ namespace DataProtection1
 			}
 
 			shouldIgnore = true;
-			encryptedTextBox.Text = Encrypt(sourceTextInput.Text);
+			encryptedTextBox.Text = _encrypter.Encrypt(sourceTextInput.Text);
 		}
 
 		protected bool shouldIgnore = false;
@@ -182,7 +139,7 @@ namespace DataProtection1
 			}
 
 			shouldIgnore = true;
-			sourceTextInput.Text = Decrypt(encryptedTextBox.Text);
+			sourceTextInput.Text = _encrypter.Decrypt(encryptedTextBox.Text);
 		}
 	}
 }

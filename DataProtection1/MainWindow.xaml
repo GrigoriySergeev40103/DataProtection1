@@ -43,11 +43,11 @@
             <TextBox   Grid.Row="0" Grid.Column="3" Name="encryptedTextBox" TextChanged="EncryptedTextChanged" VerticalContentAlignment="Center"/>
         </Grid>
 
-        <DataGrid AutoGenerateColumns="False" Width="auto" IsReadOnly="True" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding EncryptionMap}">
+        <!--<DataGrid Name="encryptionMapGrid" AutoGenerateColumns="False" Width="auto" IsReadOnly="True" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding EncryptionMap}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="z" Binding="{Binding Key}" />
                 <DataGridTextColumn Header="C(z)" Binding="{Binding Value}" />
             </DataGrid.Columns>
-        </DataGrid>
+        </DataGrid>-->
     </Grid>
 </Window>
