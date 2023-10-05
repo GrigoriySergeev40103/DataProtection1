@@ -46,10 +46,10 @@ namespace DataProtection1
 				_ => toEncrypt + new string(_encryptionData.FillerChar, _blockLength - remainder)
 			};
 
-			Span<char> encryptedString = stackalloc char[sourceText.Length];
+			StringBuilder encryptedString = new(sourceText.Length);
 
 			for (int i = 0; i < sourceText.Length; i += _blockLength)
-				_encryptionData.Map[sourceText[i..(i + _blockLength)]].CopyTo(encryptedString.Slice(i, _blockLength));
+				encryptedString.Append(_encryptionData.Map[sourceText[i..(i + _blockLength)]]);
 
 			return encryptedString.ToString();
 		}
@@ -63,12 +63,12 @@ namespace DataProtection1
 				_ => toDecrypt + new string(_encryptionData.FillerChar, _blockLength - remainder)
 			};
 
-			Span<char> decryptedString = stackalloc char[encryptedText.Length];
+			StringBuilder decryptedString = new(encryptedText.Length);
 
 			for (int i = 0; i < encryptedText.Length; i += _blockLength)
 			{
 				string decrypted = _encryptionData.Map.First(x => x.Value == encryptedText[i..(i + _blockLength)]).Key;
-				decrypted.CopyTo(decryptedString.Slice(i, _blockLength));
+				decryptedString.Append(decrypted);
 			}
 
 			return decryptedString.ToString();
