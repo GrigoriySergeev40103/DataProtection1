@@ -3,10 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DataProtection1"
+        xmlns:local="clr-namespace:DataProtection1" xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
 
+    <Window.Resources>
+        <FontFamily x:Key="SegoeFluentIcons">pack://application:,,,/Fonts/#Segoe Fluent Icons</FontFamily>
+
+        <sys:String x:Key="Icon.Save">&#xE74e;</sys:String>
+        <sys:String x:Key="Icon.Refresh">&#xE72c;</sys:String>
+        <sys:String x:Key="Icon.FolderOpen">&#xE838;</sys:String>
+    </Window.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <!--Input-->
@@ -42,12 +50,23 @@
             <TextBlock Grid.Row="0" Grid.Column="2" Text="Шифрограмма:" Margin="2, 5, 15, 5"/>
             <TextBox   Grid.Row="0" Grid.Column="3" Name="encryptedTextBox" TextChanged="EncryptedTextChanged" VerticalContentAlignment="Center"/>
         </Grid>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <!--Save button-->
+                <!--<ColumnDefinition Width="auto"/>-->
+                <!--Refresh button-->
+                <ColumnDefinition Width="auto"/>
+                <!--Open new button-->
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
 
-        <!--<DataGrid Name="encryptionMapGrid" AutoGenerateColumns="False" Width="auto" IsReadOnly="True" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding EncryptionMap}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="z" Binding="{Binding Key}" />
-                <DataGridTextColumn Header="C(z)" Binding="{Binding Value}" />
-            </DataGrid.Columns>
-        </DataGrid>-->
+            <!--<Button Grid.Row="0" Grid.Column="0" FontSize="20" FontFamily="{StaticResource SegoeFluentIcons}" Content="{StaticResource Icon.Save}" Click="OnSaveButtonClick"/>-->
+            <Button Grid.Row="0" Grid.Column="0" FontSize="20" FontFamily="{StaticResource SegoeFluentIcons}" Content="{StaticResource Icon.Refresh}" Click="OnRefreshButtonClick"/>
+            <Button Grid.Row="0" Grid.Column="1" FontSize="20" FontFamily="{StaticResource SegoeFluentIcons}" Content="{StaticResource Icon.FolderOpen}" Click="OnOpenButtonClick"/>
+        </Grid>
+        
     </Grid>
 </Window>

@@ -82,6 +82,7 @@ namespace DataProtection1
 			enumerator.MoveNext();
 			_blockLength = enumerator.Current.Length;
 		}
+
 		public void SaveToFile(string fileName)
 		{
 			JsonSerializerOptions jsonOptions = new()

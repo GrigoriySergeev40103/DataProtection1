@@ -51,42 +51,19 @@ namespace DataProtection1
 
 		protected IEncrypter _encrypter;
 
-		protected char[] _alphabet = { 'x', 'y' };
-		protected int _blockLength = 5;
-
-		public Dictionary<string, string> EncryptionMap { get; set; } = new(32);
+		private string _path;
+		private char[] _alphabet = { 'x', 'y' };
 
 		public MainWindow()
 		{
-			OpenFileDialog openFileDialog = new()
-			{
-				Filter = "json files (*.json)|*.json",
-				FilterIndex = 2,
-				RestoreDirectory = true
-			};
-			if (openFileDialog.ShowDialog() == true)
-			{
-				//Get the path of specified file
-				string filePath = openFileDialog.SafeFileName;
-				_encrypter = new SubstitutionEncrypter(filePath);
-			}
-			else
+			bool isEncrypterLoaded = LoadEncrypterFileDialog();
+
+			if (!isEncrypterLoaded)
 				Close();
 
-			FormEncryptionMap();
 			DataContext = this;
 
 			InitializeComponent();
-		}
-
-		protected void FormEncryptionMap()
-		{
-			string[] permutations = Util.GetPermutationsWithRept(_alphabet, 5).Select(x => new string(x.ToArray())).ToArray();
-			string[] shuffled = (string[])(permutations.Clone());
-			Random.Shared.Shuffle(shuffled);
-
-			for (int i = 0; i < permutations.Length; i++)
-				EncryptionMap.Add(permutations[i], shuffled[i]);
 		}
 
 		private void SourceTextChanged(object sender, TextChangedEventArgs e)
@@ -140,6 +117,41 @@ namespace DataProtection1
 
 			shouldIgnore = true;
 			sourceTextInput.Text = _encrypter.Decrypt(encryptedTextBox.Text);
+		}
+
+		private void OnSaveButtonClick(object sender, RoutedEventArgs e)
+		{
+			_encrypter.SaveToFile(_path);
+		}
+
+		private void OnRefreshButtonClick(object sender, RoutedEventArgs e)
+		{
+			_encrypter.LoadFromFile(_path);
+		}
+
+		private void OnOpenButtonClick(object sender, RoutedEventArgs e)
+		{
+			LoadEncrypterFileDialog();
+		}
+
+		private bool LoadEncrypterFileDialog()
+		{
+			OpenFileDialog openFileDialog = new()
+			{
+				Filter = "json files (*.json)|*.json",
+				FilterIndex = 2,
+				RestoreDirectory = true
+			};
+
+			if (openFileDialog.ShowDialog() == true)
+			{
+				//Get the path of specified file
+				_path = openFileDialog.SafeFileName;
+				_encrypter = new SubstitutionEncrypter(_path);
+				return true;
+			}
+
+			return false;
 		}
 	}
 }
