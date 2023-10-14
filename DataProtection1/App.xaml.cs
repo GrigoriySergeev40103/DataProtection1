@@ -38,7 +38,10 @@ namespace DataProtection1
 		{
 			SubstitutionEncrypter? encrypter = TryLoadEncrypterFileDialog(out string path);
 			if (encrypter == null)
-				return;
+			{
+				Shutdown();
+				return; // return so analyzer is not mad for *possible*(at least I think it's not?) null use of encrypter later
+			}
 
 			var mainWindow = new DataProtection1.MainWindow(encrypter, path);
 			mainWindow.Show();

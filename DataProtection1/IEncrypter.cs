@@ -10,7 +10,7 @@ namespace DataProtection1
 	{
 		public string Encrypt(string toEncrypt);
 		public string Decrypt(string toDecrypt);
-
+		
 		public bool IsValidMessage(string message);
 
 		public Task SaveToFileAsync(string fileName);

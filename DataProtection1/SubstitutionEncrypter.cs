@@ -20,18 +20,21 @@ namespace DataProtection1
 
 		protected EncrypterData _encryptionData;
 		protected int _blockLength;
-		protected List<char> _alphabet;
+		protected HashSet<char> _alphabet;
 
 		public EncrypterData EncryptionData => _encryptionData;
 
 		public async static Task<SubstitutionEncrypter> FromFile(string fileName)
 		{
+			//EncrypterData en = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
+
+
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
 			EncrypterData encryptionData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
-			SubstitutionEncrypter result = new(encryptionData);
-			var enumerator = encryptionData.Map.Keys.GetEnumerator();
-			enumerator.MoveNext();
-			result._blockLength = enumerator.Current.Length;
+			SubstitutionEncrypter result = new(encryptionData)
+			{
+				_blockLength = encryptionData.Map.Keys.First().Length
+			};
 
 			jsonStream.Close();
 
@@ -41,12 +44,9 @@ namespace DataProtection1
 		public SubstitutionEncrypter(EncrypterData encrypterData)
 		{
 			_encryptionData = encrypterData;
+			_blockLength = _encryptionData.Map.Keys.First().Length;
 
-			var enumerator = _encryptionData.Map.Keys.GetEnumerator();
-			enumerator.MoveNext();
-			_blockLength = enumerator.Current.Length;
-
-			_alphabet = ExtractAlphabet();
+			_alphabet = ExtractAlphabet(encrypterData);
 		}
 
 		public bool IsValidMessage(string message)
@@ -118,11 +118,11 @@ namespace DataProtection1
 			await File.WriteAllTextAsync(fileName, saveContent);
 		}
 
-		private List<char> ExtractAlphabet()
+		private static HashSet<char> ExtractAlphabet(in EncrypterData encrypterData)
 		{
-			List<char> alphabet = new();
+			HashSet<char> alphabet = new();
 
-            foreach (string key in _encryptionData.Map.Keys)
+            foreach (string key in encrypterData.Map.Keys)
             {
                 foreach (var c in key)
                 {
