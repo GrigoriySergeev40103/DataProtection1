@@ -26,17 +26,11 @@ namespace DataProtection1
 
 		public async static Task<SubstitutionEncrypter> FromFile(string fileName)
 		{
-			//EncrypterData en = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
-
-
-			FileStream jsonStream = File.Open(fileName, FileMode.Open);
-			EncrypterData encryptionData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
+			EncrypterData encryptionData = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
 			SubstitutionEncrypter result = new(encryptionData)
 			{
 				_blockLength = encryptionData.Map.Keys.First().Length
 			};
-
-			jsonStream.Close();
 
 			return result;
 		}
@@ -101,9 +95,7 @@ namespace DataProtection1
 		{
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
 			_encryptionData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
-			var enumerator = _encryptionData.Map.Keys.GetEnumerator();
-			enumerator.MoveNext();
-			_blockLength = enumerator.Current.Length;
+			_blockLength = _encryptionData.Map.Keys.First().Length;
 		}
 
 		public async Task SaveToFileAsync(string fileName)
