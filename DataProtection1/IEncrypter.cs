@@ -11,7 +11,9 @@ namespace DataProtection1
 		public string Encrypt(string toEncrypt);
 		public string Decrypt(string toDecrypt);
 
-		public void SaveToFile(string fileName);
-		public void LoadFromFile(string fileName);
+		public bool IsValidMessage(string message);
+
+		public Task SaveToFileAsync(string fileName);
+		public Task LoadFromFileAsync(string fileName);
 	}
 }

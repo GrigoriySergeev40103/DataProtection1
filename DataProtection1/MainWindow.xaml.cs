@@ -1,22 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace DataProtection1
 {
@@ -50,16 +37,12 @@ namespace DataProtection1
 		}
 
 		protected IEncrypter _encrypter;
+		private readonly string _path;
 
-		private string _path;
-		private char[] _alphabet = { 'x', 'y' };
-
-		public MainWindow()
+		public MainWindow(IEncrypter encrypter, string path)
 		{
-			bool isEncrypterLoaded = LoadEncrypterFileDialog();
-
-			if (!isEncrypterLoaded)
-				Close();
+			_encrypter = encrypter;
+			_path = path;
 
 			DataContext = this;
 
@@ -74,19 +57,9 @@ namespace DataProtection1
 				return;
 			}
 
-			bool isValid = sourceTextInput.Text.All(c => _alphabet.Contains(c));
-
-			if (!isValid)
-			{
-				sourceTextInput.BorderThickness = new Thickness(2);
-				sourceTextInput.BorderBrush = new SolidColorBrush(Colors.Red);
+			bool isMessageValid = _encrypter.IsValidMessage(sourceTextInput.Text);
+			if (!isMessageValid)
 				return;
-			}
-			else
-			{
-				sourceTextInput.BorderThickness = new Thickness(1);
-				sourceTextInput.BorderBrush = new SolidColorBrush(Colors.LightGray);
-			}
 
 			shouldIgnore = true;
 			encryptedTextBox.Text = _encrypter.Encrypt(sourceTextInput.Text);
@@ -101,40 +74,17 @@ namespace DataProtection1
 				return;
 			}
 
-			bool isValid = encryptedTextBox.Text.All(c => _alphabet.Contains(c));
-
-			if (!isValid)
-			{
-				encryptedTextBox.BorderThickness = new Thickness(2);
-				encryptedTextBox.BorderBrush = new SolidColorBrush(Colors.Red);
+			bool isMessageValid = _encrypter.IsValidMessage(encryptedTextBox.Text);
+			if (!isMessageValid)
 				return;
-			}
-			else
-			{
-				encryptedTextBox.BorderThickness = new Thickness(1);
-				encryptedTextBox.BorderBrush = new SolidColorBrush(Colors.LightGray);
-			}
 
 			shouldIgnore = true;
 			sourceTextInput.Text = _encrypter.Decrypt(encryptedTextBox.Text);
 		}
 
-		private void OnSaveButtonClick(object sender, RoutedEventArgs e)
-		{
-			_encrypter.SaveToFile(_path);
-		}
+		private void OnRefreshButtonClick(object sender, RoutedEventArgs e) => _encrypter.LoadFromFileAsync(_path);
 
-		private void OnRefreshButtonClick(object sender, RoutedEventArgs e)
-		{
-			_encrypter.LoadFromFile(_path);
-		}
-
-		private void OnOpenButtonClick(object sender, RoutedEventArgs e)
-		{
-			LoadEncrypterFileDialog();
-		}
-
-		private bool LoadEncrypterFileDialog()
+		private async void OnOpenButtonClick(object sender, RoutedEventArgs e)
 		{
 			OpenFileDialog openFileDialog = new()
 			{
@@ -146,12 +96,9 @@ namespace DataProtection1
 			if (openFileDialog.ShowDialog() == true)
 			{
 				//Get the path of specified file
-				_path = openFileDialog.SafeFileName;
-				_encrypter = new SubstitutionEncrypter(_path);
-				return true;
+				string path = openFileDialog.SafeFileName;
+				_encrypter = await SubstitutionEncrypter.FromFile(path);
 			}
-
-			return false;
 		}
 	}
 }

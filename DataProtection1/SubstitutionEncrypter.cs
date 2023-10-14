@@ -20,14 +20,24 @@ namespace DataProtection1
 
 		protected EncrypterData _encryptionData;
 		protected int _blockLength;
+		protected List<char> _alphabet;
 
 		public EncrypterData EncryptionData => _encryptionData;
-		public object Representer => _encryptionData;
 
-		public SubstitutionEncrypter(string fileName)
+		public async static Task<SubstitutionEncrypter> FromFile(string fileName)
 		{
-			LoadFromFile(fileName);
+			FileStream jsonStream = File.Open(fileName, FileMode.Open);
+			EncrypterData encryptionData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
+			SubstitutionEncrypter result = new(encryptionData);
+			var enumerator = encryptionData.Map.Keys.GetEnumerator();
+			enumerator.MoveNext();
+			result._blockLength = enumerator.Current.Length;
+
+			jsonStream.Close();
+
+			return result;
 		}
+
 		public SubstitutionEncrypter(EncrypterData encrypterData)
 		{
 			_encryptionData = encrypterData;
@@ -35,7 +45,20 @@ namespace DataProtection1
 			var enumerator = _encryptionData.Map.Keys.GetEnumerator();
 			enumerator.MoveNext();
 			_blockLength = enumerator.Current.Length;
+
+			_alphabet = ExtractAlphabet();
 		}
+
+		public bool IsValidMessage(string message)
+		{
+            foreach (char c in message)
+            {
+				if(!_alphabet.Contains(c))
+					return false;
+            }
+
+			return true;
+        }
 
 		public string Encrypt(string toEncrypt)
 		{
@@ -74,16 +97,16 @@ namespace DataProtection1
 			return decryptedString.ToString();
 		}
 
-		public void LoadFromFile(string fileName)
+		public async Task LoadFromFileAsync(string fileName)
 		{
-			string jsonContent = File.ReadAllText(fileName);
-			_encryptionData = JsonSerializer.Deserialize<EncrypterData>(jsonContent);
+			FileStream jsonStream = File.Open(fileName, FileMode.Open);
+			_encryptionData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
 			var enumerator = _encryptionData.Map.Keys.GetEnumerator();
 			enumerator.MoveNext();
 			_blockLength = enumerator.Current.Length;
 		}
 
-		public void SaveToFile(string fileName)
+		public async Task SaveToFileAsync(string fileName)
 		{
 			JsonSerializerOptions jsonOptions = new()
 			{
@@ -92,7 +115,23 @@ namespace DataProtection1
 
 			string saveContent = JsonSerializer.Serialize(_encryptionData, jsonOptions);
 
-			File.WriteAllText(fileName, saveContent);
+			await File.WriteAllTextAsync(fileName, saveContent);
 		}
+
+		private List<char> ExtractAlphabet()
+		{
+			List<char> alphabet = new();
+
+            foreach (string key in _encryptionData.Map.Keys)
+            {
+                foreach (var c in key)
+                {
+					if(!alphabet.Contains(c))
+						alphabet.Add(c);
+                }
+            }
+
+			return alphabet;
+        }
 	}
 }
