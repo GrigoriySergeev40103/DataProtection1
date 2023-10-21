@@ -19,13 +19,11 @@ namespace DataProtection1
 		protected EncrypterData _encrypterData;
 		protected Dictionary<int, int> _reversedShuffleMap;
 		protected int _blockLength;
-		protected HashSet<char> _alphabet;
 
-		public RearrangeEncrypter(EncrypterData encrypterData, HashSet<char> alphabet)
+		public RearrangeEncrypter(EncrypterData encrypterData)
 		{
 			_encrypterData = encrypterData;
 			_blockLength = _encrypterData.PosShuffleMap.Keys.Count;
-			_alphabet = alphabet;
 			_reversedShuffleMap = _encrypterData.PosShuffleMap.ToDictionary(x => x.Value, x => x.Key);
 		}
 
@@ -45,7 +43,7 @@ namespace DataProtection1
 			{
 				for (int j = 0; j < _blockLength; j++)
 				{
-					int shuffledPos = _reversedShuffleMap[j + 1];
+					int shuffledPos = _encrypterData.PosShuffleMap[j + 1] - 1;
 					decryptedString.Append(encryptedText[i * _blockLength + shuffledPos]);
 				}
 			}
@@ -69,7 +67,7 @@ namespace DataProtection1
 			{
 				for (int j = 0; j < _blockLength; j++)
 				{
-					int shuffledPos = _encrypterData.PosShuffleMap[j + 1];
+					int shuffledPos = _reversedShuffleMap[j + 1] - 1;
 					encryptedString.Append(sourceText[i * _blockLength + shuffledPos]);
 				}
 			}
@@ -77,16 +75,7 @@ namespace DataProtection1
 			return encryptedString.ToString();
 		}
 
-		public bool IsValidMessage(string message)
-		{
-			foreach (char c in message)
-			{
-				if (!_alphabet.Contains(c))
-					return false;
-			}
-
-			return true;
-		}
+		public bool IsValidMessage(string message) => true;
 
 		public async Task LoadFromFileAsync(string fileName)
 		{
@@ -105,6 +94,14 @@ namespace DataProtection1
 			string saveContent = JsonSerializer.Serialize(_encrypterData, jsonOptions);
 
 			await File.WriteAllTextAsync(fileName, saveContent);
+		}
+
+		public async static Task<RearrangeEncrypter> FromFile(string fileName)
+		{
+			EncrypterData encryptionData = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
+			RearrangeEncrypter result = new(encryptionData);
+
+			return result;
 		}
 	}
 }

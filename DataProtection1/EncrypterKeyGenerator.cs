@@ -20,6 +20,7 @@ namespace DataProtection1
 			positions.CopyTo(shuffledPoses);
 			Random.Shared.Shuffle(shuffledPoses);
 
+			encrypterData.PosShuffleMap = new();
 			for (int i = 0; i < blockLength; i++)
 				encrypterData.PosShuffleMap.Add(positions[i], shuffledPoses[i]);
 

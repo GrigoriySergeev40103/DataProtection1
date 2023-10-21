@@ -14,7 +14,7 @@ namespace DataProtection1
 	/// </summary>
 	public partial class App : Application
 	{
-		private static SubstitutionEncrypter? TryLoadEncrypterFileDialog(out string path)
+		private static string? TryGetPathToJsonKey()
 		{
 			OpenFileDialog openFileDialog = new()
 			{
@@ -23,27 +23,28 @@ namespace DataProtection1
 				RestoreDirectory = true
 			};
 
+			//Get path to the chosen file
 			if (openFileDialog.ShowDialog() == true)
-			{
-				//Get path to the chosen file
-				path = openFileDialog.SafeFileName;
-				return SubstitutionEncrypter.FromFile(path).Result;
-			}
+				return openFileDialog.SafeFileName;
 
-			path = string.Empty;
 			return null;
 		}
 
 		App()
 		{
-			SubstitutionEncrypter? encrypter = TryLoadEncrypterFileDialog(out string path);
-			if (encrypter == null)
+			string? pathToJson = TryGetPathToJsonKey();
+			if (pathToJson == null)
 			{
 				Shutdown();
 				return; // return so analyzer is not mad for *possible*(at least I think it's not?) null use of encrypter later
 			}
 
-			var mainWindow = new DataProtection1.MainWindow(encrypter, path);
+			//HashSet<char> alphabet = new() { 'a', 'b', 'c', 'd', 'e', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+			//RearrangeEncrypter encrypter = new(EncrypterKeyGenerator.GenerateShuffleEncrypter(15, '0'));
+			//encrypter.SaveToFileAsync(pathToJson).Wait();
+			RearrangeEncrypter encrypter = RearrangeEncrypter.FromFile(pathToJson).Result;
+
+			var mainWindow = new DataProtection1.MainWindow(encrypter, pathToJson);
 			mainWindow.Show();
 			mainWindow.Activate();
 		}
