@@ -9,7 +9,7 @@ namespace DataProtection1
 {
 	static class RandomExtensions
 	{
-		public static void Shuffle<T>(this Random rng, T[] array)
+		public static void Shuffle<T>(this Random rng, Span<T> array)
 		{
 			int n = array.Length;
 			while (n > 1)

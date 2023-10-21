@@ -22,8 +22,6 @@ namespace DataProtection1
 		protected int _blockLength;
 		protected HashSet<char> _alphabet;
 
-		public EncrypterData EncryptionData => _encryptionData;
-
 		public async static Task<SubstitutionEncrypter> FromFile(string fileName)
 		{
 			EncrypterData encryptionData = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
