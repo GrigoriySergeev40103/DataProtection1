@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -43,6 +45,17 @@ namespace DataProtection1
 			//RearrangeEncrypter encrypter = new(EncrypterKeyGenerator.GenerateShuffleEncrypter(15, '0'));
 			//encrypter.SaveToFileAsync(pathToJson).Wait();
 			RearrangeEncrypter encrypter = RearrangeEncrypter.FromFile(pathToJson).Result;
+
+			Stopwatch sw = new();
+			sw.Start();
+			EncrypterKeyGenerator.SlowGenerateShuffleEncrypter(15, '0');
+			sw.Stop();
+			long slowElapsed = sw.ElapsedTicks;
+			sw.Restart();
+			EncrypterKeyGenerator.GenerateShuffleEncrypter(15, '0');
+			sw.Stop();
+			long fastElapsed = sw.ElapsedTicks;
+			File.WriteAllText("test.txt", $"slow:{slowElapsed}\n fast:{fastElapsed}");
 
 			var mainWindow = new DataProtection1.MainWindow(encrypter, pathToJson);
 			mainWindow.Show();
