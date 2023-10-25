@@ -12,19 +12,19 @@ namespace DataProtection1
 {
 	public class SubstitutionEncrypter : IEncrypter
 	{
-		public struct EncrypterData
+		public struct EncryptionData
 		{
 			public Dictionary<string, string> Map { get; set; }
 			public char FillerChar { get; set; }
 		}
 
-		protected EncrypterData _encryptionData;
+		protected EncryptionData _encryptionData;
 		protected int _blockLength;
 		protected HashSet<char> _alphabet;
 
 		public async static Task<SubstitutionEncrypter> FromFile(string fileName)
 		{
-			EncrypterData encryptionData = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
+			EncryptionData encryptionData = JsonSerializer.Deserialize<EncryptionData>(await File.ReadAllTextAsync(fileName));
 			SubstitutionEncrypter result = new(encryptionData)
 			{
 				_blockLength = encryptionData.Map.Keys.First().Length
@@ -33,7 +33,7 @@ namespace DataProtection1
 			return result;
 		}
 
-		public SubstitutionEncrypter(EncrypterData encrypterData)
+		public SubstitutionEncrypter(EncryptionData encrypterData)
 		{
 			_encryptionData = encrypterData;
 			_blockLength = _encryptionData.Map.Keys.First().Length;
@@ -92,7 +92,7 @@ namespace DataProtection1
 		public async Task LoadFromFileAsync(string fileName)
 		{
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
-			_encryptionData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
+			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream);
 			_blockLength = _encryptionData.Map.Keys.First().Length;
 		}
 
@@ -108,7 +108,7 @@ namespace DataProtection1
 			await File.WriteAllTextAsync(fileName, saveContent);
 		}
 
-		private static HashSet<char> ExtractAlphabet(in EncrypterData encrypterData)
+		private static HashSet<char> ExtractAlphabet(in EncryptionData encrypterData)
 		{
 			HashSet<char> alphabet = new();
 

@@ -8,9 +8,9 @@ namespace DataProtection1
 {
 	internal static class EncrypterKeyGenerator
 	{
-		public static RearrangeEncrypter.EncrypterData GenerateShuffleEncrypter(int blockLength, char fillerChar)
+		public static RearrangeEncrypter.EncryptionData GenerateShuffleEncrypter(int blockLength, char fillerChar)
 		{
-			RearrangeEncrypter.EncrypterData encrypterData = new();
+			RearrangeEncrypter.EncryptionData encrypterData = new();
 
 			Span<int> positions = stackalloc int[blockLength];
 			for (int i = 0; i < blockLength; i++)

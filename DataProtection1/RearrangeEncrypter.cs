@@ -10,17 +10,17 @@ namespace DataProtection1
 {
 	internal class RearrangeEncrypter : IEncrypter
 	{
-		public struct EncrypterData
+		public struct EncryptionData
 		{
 			public Dictionary<int, int> PosShuffleMap { get; set; }
 			public char FillerChar { get; set; }
 		}
 
-		protected EncrypterData _encrypterData;
+		protected EncryptionData _encrypterData;
 		protected Dictionary<int, int> _reversedShuffleMap;
 		protected int _blockLength;
 
-		public RearrangeEncrypter(EncrypterData encrypterData)
+		public RearrangeEncrypter(EncryptionData encrypterData)
 		{
 			_encrypterData = encrypterData;
 			_blockLength = _encrypterData.PosShuffleMap.Keys.Count;
@@ -80,7 +80,7 @@ namespace DataProtection1
 		public async Task LoadFromFileAsync(string fileName)
 		{
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
-			_encrypterData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
+			_encrypterData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream);
 			_blockLength = _encrypterData.PosShuffleMap.Keys.Count;
 		}
 
@@ -98,7 +98,7 @@ namespace DataProtection1
 
 		public async static Task<RearrangeEncrypter> FromFile(string fileName)
 		{
-			EncrypterData encryptionData = JsonSerializer.Deserialize<EncrypterData>(await File.ReadAllTextAsync(fileName));
+			EncryptionData encryptionData = JsonSerializer.Deserialize<EncryptionData>(await File.ReadAllTextAsync(fileName));
 			RearrangeEncrypter result = new(encryptionData);
 
 			return result;
