@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace DataProtection1
@@ -10,12 +13,12 @@ namespace DataProtection1
 	{
         public struct EncryptionData
         {
-			public int A;
-			public int C;
-			public int T0;
-			public int B;
-			public List<char> Alphabet;
-        }
+			public int A { get; set; }
+			public int C { get; set; }
+			public int T0 { get; set; }
+			public int B { get; set; }
+			public List<char> Alphabet { get; set; }
+		}
 
 		protected EncryptionData _encryptionData;
 		protected List<int> _randSequence = new();
@@ -81,14 +84,23 @@ namespace DataProtection1
 			return true;
 		}
 
-		public Task LoadFromFileAsync(string fileName)
+		public async Task LoadFromFileAsync(string fileName)
 		{
-			throw new NotImplementedException();
+			FileStream jsonStream = File.Open(fileName, FileMode.Open);
+			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream);
+			_randSequence.Add(_encryptionData.T0);
 		}
 
-		public Task SaveToFileAsync(string fileName)
+		public async Task SaveToFileAsync(string fileName)
 		{
-			throw new NotImplementedException();
+			JsonSerializerOptions jsonOptions = new()
+			{
+				WriteIndented = true
+			};
+
+			string saveContent = JsonSerializer.Serialize(_encryptionData, jsonOptions);
+
+			await File.WriteAllTextAsync(fileName, saveContent);
 		}
 
 		protected void FillRandSequnce(int till)
@@ -98,6 +110,14 @@ namespace DataProtection1
 				int nextVal = (_encryptionData.A * _randSequence[i - 1] + _encryptionData.C) % _encryptionData.B;
 				_randSequence.Add(nextVal);
 			}
+		}
+
+		public async static Task<GammaEncrypter> FromFile(string fileName)
+		{
+			EncryptionData encryptionData = JsonSerializer.Deserialize<EncryptionData>(await File.ReadAllTextAsync(fileName));
+			GammaEncrypter result = new(encryptionData);
+
+			return result;
 		}
 	}
 }

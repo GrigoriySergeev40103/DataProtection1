@@ -39,22 +39,9 @@ namespace DataProtection1
 				return; // return so analyzer is not mad for *possible*(at least I think it's not?) null use of encrypter later
 			}
 
-			GammaEncrypter.EncryptionData encryptionData = new()
-			{
-				A  = 29,
-				C  = 27,
-				T0 = 16
-			};
+			GammaEncrypter gammaEncrypter = GammaEncrypter.FromFile(pathToJson).Result;
 
-			List<char> alphabet = new(256);
-            for (int i = 0; i < 256; i++)
-				alphabet.Add((char)i);
-
-			GammaEncrypter gammaEncrypter = new(encryptionData);
-
-			RearrangeEncrypter encrypter = RearrangeEncrypter.FromFile(pathToJson).Result;
-
-			var mainWindow = new DataProtection1.MainWindow(encrypter, pathToJson);
+			var mainWindow = new DataProtection1.MainWindow(gammaEncrypter, pathToJson);
 			mainWindow.Show();
 			mainWindow.Activate();
 		}

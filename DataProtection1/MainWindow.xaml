@@ -31,8 +31,6 @@
             <Grid.RowDefinitions>
                 <!--Текст в шифрограмму-->
                 <RowDefinition Height="auto"/>
-                <!--Encryption map-->
-                <RowDefinition/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <!--Source text textblock-->
@@ -46,17 +44,16 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Текст:" Margin="2, 5, 15, 5"/>
-            <TextBox   Grid.Row="0" Grid.Column="1" Name="sourceTextInput" TextChanged="SourceTextChanged" VerticalContentAlignment="Center"/>
+            <TextBox   Grid.Row="0" Grid.Column="1" Name="sourceTextInput" TextChanged="SourceTextChanged" TextWrapping="Wrap" VerticalContentAlignment="Center"/>
             <TextBlock Grid.Row="0" Grid.Column="2" Text="Шифрограмма:" Margin="2, 5, 15, 5"/>
-            <TextBox   Grid.Row="0" Grid.Column="3" Name="encryptedTextBox" TextChanged="EncryptedTextChanged" VerticalContentAlignment="Center"/>
+            <TextBox   Grid.Row="0" Grid.Column="3" Name="encryptedTextBox" TextChanged="EncryptedTextChanged" TextWrapping="Wrap" VerticalContentAlignment="Center"/>
         </Grid>
+        <!--Buttons-->
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <!--Save button-->
-                <!--<ColumnDefinition Width="auto"/>-->
                 <!--Refresh button-->
                 <ColumnDefinition Width="auto"/>
                 <!--Open new button-->
