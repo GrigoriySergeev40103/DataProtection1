@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Buffers.Binary;
 using System.Windows.Documents;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.Xml;
 
 namespace DataProtection1
 {
@@ -28,6 +29,11 @@ namespace DataProtection1
 
 		protected EncryptionData _encryptionData;
 
+		public DesEcbEncrypter(EncryptionData encryptionData)
+		{
+			_encryptionData = encryptionData;
+		}
+
 		public string Decrypt(string toDecrypt)
 		{
 			throw new NotImplementedException();
@@ -35,6 +41,13 @@ namespace DataProtection1
 
 		public string Encrypt(string toEncrypt)
 		{
+			int remainder = toEncrypt.Length % 4;
+			toEncrypt = remainder switch
+			{
+				0 => toEncrypt,
+				_ => toEncrypt + new string(' ', 4 - remainder)
+			};
+
 			Span<byte> bytes = Encoding.Unicode.GetBytes(toEncrypt);
 
 			ulong block = MemoryMarshal.Read<ulong>(bytes);
