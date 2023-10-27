@@ -39,15 +39,8 @@ namespace DataProtection1
 			throw new NotImplementedException();
 		}
 
-		public string Encrypt(string toEncrypt)
+		protected string Temp(string toEncrypt)
 		{
-			int remainder = toEncrypt.Length % 4;
-			toEncrypt = remainder switch
-			{
-				0 => toEncrypt,
-				_ => toEncrypt + new string(' ', 4 - remainder)
-			};
-
 			Span<byte> bytes = Encoding.Unicode.GetBytes(toEncrypt);
 
 			ulong block = MemoryMarshal.Read<ulong>(bytes);
@@ -92,6 +85,25 @@ namespace DataProtection1
 			MemoryMarshal.Write(bytes, ref shuffledConcat);
 
 			string result = Encoding.Unicode.GetString(bytes);
+
+			return result;
+		}
+
+		public string Encrypt(string toEncrypt)
+		{
+			int remainder = toEncrypt.Length % 4;
+			toEncrypt = remainder switch
+			{
+				0 => toEncrypt,
+				_ => toEncrypt + new string(' ', 4 - remainder)
+			};
+
+			string result = "";
+
+			for (int i = 0; i < toEncrypt.Length; i +=4)
+			{
+				result += Temp(toEncrypt.Substring(i, 4));
+			}
 
 			return result;
 		}
