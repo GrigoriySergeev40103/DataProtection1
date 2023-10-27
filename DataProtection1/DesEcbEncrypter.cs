@@ -198,31 +198,36 @@ namespace DataProtection1
 			}
 			Span<byte> sRes = stackalloc byte[8];
 
-			byte sK = 0;
-			byte sL = 0;
 			for (int i = 0; i < 8; i++)
 			{
+				byte sK = 0;
+				byte sL = 0;
+
 				// Form k
-				bool bit = (s[i] & (1 << 0)) != 0;
+				bool bit = (s[i] & (1 << 7)) != 0;
 				if (bit)
-					sK |= 1 << 0;
-				bit = (s[i] & (1 << 5)) != 0;
+					sK |= 1 << 7;
+				bit = (s[i] & (1 << 7 - 5)) != 0;
 				if (bit)
-					sK |= 1 << 1;
+					sK |= 1 << 6;
+
+				sK >>= 4;
 
 				// Form l
-				bit = (s[i] & (1 << 1)) != 0;
+				bit = (s[i] & (1 << 7 - 1)) != 0;
 				if (bit)
-					sL |= 1 << 0;
-				bit = (s[i] & (1 << 2)) != 0;
+					sL |= 1 << 7;
+				bit = (s[i] & (1 << 7 - 2)) != 0;
 				if (bit)
-					sL |= 1 << 1;
-				bit = (s[i] & (1 << 3)) != 0;
+					sL |= 1 << 6;
+				bit = (s[i] & (1 << 7 - 3)) != 0;
 				if (bit)
-					sL |= 1 << 2;
-				bit = (s[i] & (1 << 4)) != 0;
+					sL |= 1 << 5;
+				bit = (s[i] & (1 << 7 - 4)) != 0;
 				if (bit)
-					sL |= 1 << 3;
+					sL |= 1 << 4;
+
+				sL >>= 4;
 
 				sRes[i] = (byte)_encryptionData.S[sL][sK];
 				sRes[i] <<= 4;
