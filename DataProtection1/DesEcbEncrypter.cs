@@ -8,6 +8,8 @@ using System.Buffers.Binary;
 using System.Windows.Documents;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.Xml;
+using System.Text.Json;
+using System.IO;
 
 namespace DataProtection1
 {
@@ -36,14 +38,27 @@ namespace DataProtection1
 
 		public string Decrypt(string toDecrypt)
 		{
-			throw new NotImplementedException();
+			int remainder = toDecrypt.Length % 4;
+			toDecrypt = remainder switch
+			{
+				0 => toDecrypt,
+				_ => toDecrypt + new string(' ', 4 - remainder)
+			};
+
+			StringBuilder result = new(toDecrypt.Length);
+
+			for (int i = 0; i < toDecrypt.Length; i += 4)
+			{
+				byte[] bytes = Encoding.Unicode.GetBytes(toDecrypt.Substring(i, 4));
+				ulong block = MemoryMarshal.Read<ulong>(bytes);
+				result.Append(DecryptBlock(block));
+			}
+
+			return result.ToString();
 		}
 
-		protected string Temp(string toEncrypt)
+		protected string EncryptBlock(ulong block)
 		{
-			Span<byte> bytes = Encoding.Unicode.GetBytes(toEncrypt);
-
-			ulong block = MemoryMarshal.Read<ulong>(bytes);
 			ulong shuffledBlock = 0;
 
 			for (int i = 0; i < _encryptionData.IP.Count; i++)
@@ -69,7 +84,11 @@ namespace DataProtection1
 				r ^= oldL;
 			}
 
-			ulong concat = r + l;
+			ulong concat = 0;
+			concat |= l;
+			concat <<= 24;
+			concat |= r;
+			concat <<= 8;
 			ulong shuffledConcat = 0;
 
 			for (int i = 0; i < _encryptionData.InvIP.Count; i++)
@@ -81,6 +100,60 @@ namespace DataProtection1
 					shuffledConcat |= 1ul << 63 - bitPosition;
 				}
 			}
+
+			Span<byte> bytes = stackalloc byte[8];
+
+			MemoryMarshal.Write(bytes, ref shuffledConcat);
+
+			string result = Encoding.Unicode.GetString(bytes);
+
+			return result;
+		}
+
+		protected string DecryptBlock(ulong block)
+		{
+			ulong shuffledBlock = 0;
+
+			for (int i = 0; i < _encryptionData.InvIP.Count; i++)
+			{
+				bool bit = (block & (1ul << 63 - i)) != 0;
+				if (bit)
+				{
+					int bitPosition = _encryptionData.InvIP[i + 1] - 1;
+					shuffledBlock |= 1ul << 63 - bitPosition;
+				}
+			}
+
+			uint l = (uint)(shuffledBlock >> 32);
+			uint r = (uint)(shuffledBlock & uint.MaxValue);
+			ulong[] keys = FormKeys();
+
+			for (int i = 0; i < 16; i++)
+			{
+				uint oldR = r;
+				r = l;
+				l = F(r, keys[15 - i]);
+				l ^= oldR;
+			}
+
+			ulong concat = 0;
+			concat |= l;
+			concat <<= 24;
+			concat |= r;
+			concat <<= 8;
+			ulong shuffledConcat = 0;
+
+			for (int i = 0; i < _encryptionData.IP.Count; i++)
+			{
+				bool bit = (concat & (1ul << 63 - i)) != 0;
+				if (bit)
+				{
+					int bitPosition = _encryptionData.IP[i + 1] - 1;
+					shuffledConcat |= 1ul << 63 - bitPosition;
+				}
+			}
+
+			Span<byte> bytes = stackalloc byte[8];
 
 			MemoryMarshal.Write(bytes, ref shuffledConcat);
 
@@ -98,26 +171,36 @@ namespace DataProtection1
 				_ => toEncrypt + new string(' ', 4 - remainder)
 			};
 
-			string result = "";
+			StringBuilder result = new(toEncrypt.Length);
 
 			for (int i = 0; i < toEncrypt.Length; i +=4)
 			{
-				result += Temp(toEncrypt.Substring(i, 4));
+				byte[] bytes = Encoding.Unicode.GetBytes(toEncrypt.Substring(i, 4));
+				ulong block = MemoryMarshal.Read<ulong>(bytes);
+				result.Append(EncryptBlock(block));
 			}
 
-			return result;
+			return result.ToString();
 		}
 
 		public bool IsValidMessage(string message) => true;
 
-		public Task LoadFromFileAsync(string fileName)
+		public async Task LoadFromFileAsync(string fileName)
 		{
-			throw new NotImplementedException();
+			FileStream jsonStream = File.Open(fileName, FileMode.Open);
+			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream);
 		}
 
-		public Task SaveToFileAsync(string fileName)
+		public async Task SaveToFileAsync(string fileName)
 		{
-			throw new NotImplementedException();
+			JsonSerializerOptions jsonOptions = new()
+			{
+				WriteIndented = true
+			};
+
+			string saveContent = JsonSerializer.Serialize(_encryptionData, jsonOptions);
+
+			await File.WriteAllTextAsync(fileName, saveContent);
 		}
 
 		protected ulong[] FormKeys()
