@@ -59,11 +59,15 @@ namespace DataProtection1
 
 			StringBuilder result = new(toEncrypt.Length);
 
+			int lastVal = _encryptionData.T0;
 			for (int i = 0; i < toEncrypt.Length; i++)
 			{
 				int sourceCode = Alphabet.IndexOf(toEncrypt[i]);
 
-				int encryptCode = sourceCode + _randSequence[i];
+				int nextVal = (_encryptionData.A * lastVal + _encryptionData.C) % _encryptionData.B;
+				lastVal = nextVal;
+
+				int encryptCode = sourceCode + nextVal;
 				if(encryptCode >= Alphabet.Count)
 					encryptCode -= Alphabet.Count;
 
