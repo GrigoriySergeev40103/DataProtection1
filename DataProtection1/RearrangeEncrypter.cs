@@ -12,19 +12,25 @@ namespace DataProtection1
 	{
 		public struct EncrypterData
 		{
-			public Dictionary<int, int> PosShuffleMap { get; set; }
+			public int[] PosShuffleList { get; set; }
 			public char FillerChar { get; set; }
 		}
 
 		protected EncrypterData _encrypterData;
-		protected Dictionary<int, int> _reversedShuffleMap;
+		protected int[] _reversedShuffle;
 		protected int _blockLength;
 
 		public RearrangeEncrypter(EncrypterData encrypterData)
 		{
 			_encrypterData = encrypterData;
-			_blockLength = _encrypterData.PosShuffleMap.Keys.Count;
-			_reversedShuffleMap = _encrypterData.PosShuffleMap.ToDictionary(x => x.Value, x => x.Key);
+			_blockLength = _encrypterData.PosShuffleList.Length;
+
+			for (int i = 0; i < _encrypterData.PosShuffleList.Length; i++)
+				_encrypterData.PosShuffleList[i]--;
+
+			_reversedShuffle = new int[_encrypterData.PosShuffleList.Length];
+			for (int i = 0; i < _reversedShuffle.Length; i++)
+				_reversedShuffle[_encrypterData.PosShuffleList[i]] = i;
 		}
 
 		public string Decrypt(string toDecrypt)
@@ -43,7 +49,7 @@ namespace DataProtection1
 			{
 				for (int j = 0; j < _blockLength; j++)
 				{
-					int shuffledPos = _encrypterData.PosShuffleMap[j + 1] - 1;
+					int shuffledPos = _encrypterData.PosShuffleList[j];
 					decryptedString.Append(encryptedText[i * _blockLength + shuffledPos]);
 				}
 			}
@@ -67,7 +73,7 @@ namespace DataProtection1
 			{
 				for (int j = 0; j < _blockLength; j++)
 				{
-					int shuffledPos = _reversedShuffleMap[j + 1] - 1;
+					int shuffledPos = _encrypterData.PosShuffleList[j];
 					encryptedString.Append(sourceText[i * _blockLength + shuffledPos]);
 				}
 			}
@@ -81,7 +87,7 @@ namespace DataProtection1
 		{
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
 			_encrypterData = await JsonSerializer.DeserializeAsync<EncrypterData>(jsonStream);
-			_blockLength = _encrypterData.PosShuffleMap.Keys.Count;
+			_blockLength = _encrypterData.PosShuffleList.Length;
 		}
 
 		public async Task SaveToFileAsync(string fileName)

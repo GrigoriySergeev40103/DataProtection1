@@ -16,13 +16,11 @@ namespace DataProtection1
 			for (int i = 0; i < blockLength; i++)
 				positions[i] = i + 1;
 
-			Span<int> shuffledPoses = stackalloc int[blockLength];
-			positions.CopyTo(shuffledPoses);
-			Random.Shared.Shuffle(shuffledPoses);
+			Random.Shared.Shuffle(positions);
 
-			encrypterData.PosShuffleMap = new();
+			encrypterData.PosShuffleList = new int[blockLength];
 			for (int i = 0; i < blockLength; i++)
-				encrypterData.PosShuffleMap.Add(positions[i], shuffledPoses[i]);
+				encrypterData.PosShuffleList[i] = positions[i];
 
 			encrypterData.FillerChar = fillerChar;
 
