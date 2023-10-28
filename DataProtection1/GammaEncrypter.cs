@@ -21,28 +21,27 @@ namespace DataProtection1
 		}
 
 		protected EncryptionData _encryptionData;
-		protected List<int> _randSequence = new();
 
 		protected List<char> Alphabet => _encryptionData.Alphabet;
 
 		public GammaEncrypter(EncryptionData encryptionData)
 		{
 			_encryptionData = encryptionData;
-			_randSequence.Add(encryptionData.T0);
 		}
 
         public string Decrypt(string toDecrypt)
 		{
-			if (_randSequence.Count < toDecrypt.Length)
-				FillRandSequnce(toDecrypt.Length);
-
 			StringBuilder result = new(toDecrypt.Length);
 
+			int lastVal = _encryptionData.T0;
 			for (int i = 0; i < toDecrypt.Length; i++)
 			{
 				int encryptedCode = Alphabet.IndexOf(toDecrypt[i]);
 
-				int decryptedCode = encryptedCode - _randSequence[i];
+				int nextVal = (_encryptionData.A * lastVal + _encryptionData.C) % _encryptionData.B;
+				lastVal = nextVal;
+
+				int decryptedCode = encryptedCode - nextVal;
 				if (decryptedCode < 0)
 					decryptedCode += Alphabet.Count;
 
@@ -54,9 +53,6 @@ namespace DataProtection1
 
 		public string Encrypt(string toEncrypt)
 		{
-			if (_randSequence.Count < toEncrypt.Length)
-				FillRandSequnce(toEncrypt.Length);
-
 			StringBuilder result = new(toEncrypt.Length);
 
 			int lastVal = _encryptionData.T0;
@@ -79,12 +75,6 @@ namespace DataProtection1
 
 		public bool IsValidMessage(string message)
 		{
-			for (int i = 0; i < message.Length; i++)
-			{
-				if (!Alphabet.Contains(message[i]))
-					return false;
-			}
-
 			return true;
 		}
 
@@ -92,7 +82,6 @@ namespace DataProtection1
 		{
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
 			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream);
-			_randSequence.Add(_encryptionData.T0);
 		}
 
 		public async Task SaveToFileAsync(string fileName)
@@ -105,15 +94,6 @@ namespace DataProtection1
 			string saveContent = JsonSerializer.Serialize(_encryptionData, jsonOptions);
 
 			await File.WriteAllTextAsync(fileName, saveContent);
-		}
-
-		protected void FillRandSequnce(int till)
-		{
-			for (int i = _randSequence.Count; i < till; i++)
-			{
-				int nextVal = (_encryptionData.A * _randSequence[i - 1] + _encryptionData.C) % _encryptionData.B;
-				_randSequence.Add(nextVal);
-			}
 		}
 
 		public async static Task<GammaEncrypter> FromFile(string fileName)
