@@ -75,7 +75,6 @@ namespace DataProtection1
 			uint r = (uint)(shuffledBlock & uint.MaxValue);
 			ulong[] keys = FormKeys();
 
-
 			for (int i = 0; i < 16; i++)
 			{
 				r = F(r, keys[i]);
