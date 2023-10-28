@@ -162,6 +162,8 @@ namespace DataProtection1
 
 			result.S = S;
 
+			result.K = (ulong)Random.Shared.Next(1, 2515152);
+
 			return result;
 		}
 	}

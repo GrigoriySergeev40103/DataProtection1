@@ -223,11 +223,9 @@ namespace DataProtection1
 				l <<= _encryptionData.LSi[i + 1];
 				r <<= _encryptionData.LSi[i + 1];
 
-				ulong concat = 0;
-				concat |= l;
-				concat <<= 24;
-				concat |= r;
-				concat <<= 8;
+				ulong longL = (ulong)l << 32;
+				ulong longR = r;
+				ulong concat = longL | longR;
 				ulong shuffledConcat = 0;
 
 				for (int j = 0; j < _encryptionData.PC2.Count; j++)
