@@ -84,11 +84,9 @@ namespace DataProtection1
 				r ^= oldL;
 			}
 
-			ulong concat = 0;
-			concat |= l;
-			concat <<= 24;
-			concat |= r;
-			concat <<= 8;
+			ulong longL = (ulong)l << 32;
+			ulong longR = r;
+			ulong concat = longL | longR;
 			ulong shuffledConcat = 0;
 
 			for (int i = 0; i < _encryptionData.InvIP.Count; i++)
@@ -136,11 +134,9 @@ namespace DataProtection1
 				l ^= oldR;
 			}
 
-			ulong concat = 0;
-			concat |= l;
-			concat <<= 24;
-			concat |= r;
-			concat <<= 8;
+			ulong longL = (ulong)l << 32;
+			ulong longR = r;
+			ulong concat = longL | longR;
 			ulong shuffledConcat = 0;
 
 			for (int i = 0; i < _encryptionData.IP.Count; i++)
