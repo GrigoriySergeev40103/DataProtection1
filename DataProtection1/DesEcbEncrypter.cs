@@ -214,9 +214,10 @@ namespace DataProtection1
 				}
 			}
 
+			// Correct
 			// splitting 56 bits into 2 28 bit sets
 			uint l = (uint)((k0 >> 36) << 4);
-			uint r = (uint)((k0 << 28) >> 36);
+			uint r = (uint)((k0 << 28) >> 32);
 
 			for (int i = 0; i < 16; i++)
 			{
@@ -266,11 +267,12 @@ namespace DataProtection1
 
 			expanded ^= k;
 
+			// PROBLEM(INCORRECT ALGO)
 			Span<byte> s = stackalloc byte[8];
 			for (int i = 0; i < 8; i++)
 			{
 				int shiftBy = 64 - 6 * (i + 1);
-				s[i] = (byte)((byte)(expanded >> shiftBy) << 2);
+				s[i] = (byte)(((byte)(expanded >> shiftBy)) << 2);
 			}
 			Span<byte> sRes = stackalloc byte[8];
 
