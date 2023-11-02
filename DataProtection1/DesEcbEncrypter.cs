@@ -206,10 +206,10 @@ namespace DataProtection1
 
 			for (int i = 0; i < _encryptionData.PC1.Length; i++)
 			{
-				bool bit = (_encryptionData.K & (1ul << 63 - i)) != 0;
+				bool bit = (_encryptionData.K & (1ul << 64 - _encryptionData.PC1[i])) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.PC1[i] - 1;
+					int bitPosition = i;
 					k0 |= 1ul << 63 - bitPosition;
 				}
 			}
@@ -231,10 +231,10 @@ namespace DataProtection1
 
 				for (int j = 0; j < _encryptionData.PC2.Length; j++)
 				{
-					bool bit = (concat & (1ul << 63 - j)) != 0;
+					bool bit = (concat & (1ul << 64 - _encryptionData.PC2[j])) != 0;
 					if (bit)
 					{
-						int bitPosition = _encryptionData.PC2[j] - 1;
+						int bitPosition = j;
 						shuffledConcat |= 1ul << 63 - bitPosition;
 					}
 				}
@@ -267,7 +267,7 @@ namespace DataProtection1
 
 			expanded ^= k;
 
-			// PROBLEM(INCORRECT ALGO)
+			//(CORRECT ALGO)
 			Span<byte> s = stackalloc byte[8];
 			for (int i = 0; i < 8; i++)
 			{
@@ -289,7 +289,7 @@ namespace DataProtection1
 				if (bit)
 					sK |= 1 << 6;
 
-				sK >>= 4;
+				sK >>= 6;
 
 				// Form l
 				bit = (s[i] & (1 << 7 - 1)) != 0;
@@ -307,10 +307,12 @@ namespace DataProtection1
 
 				sL >>= 4;
 
+				// Check value retrieval from S(are indexes proper here?)
 				sRes[i] = (byte)_encryptionData.S[sL][sK];
 				sRes[i] <<= 4;
 			}
 
+			// WRONG(not the way we need)
 			uint sResInt = MemoryMarshal.Read<uint>(sRes);
 			uint result = 0;
 
