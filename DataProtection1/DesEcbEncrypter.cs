@@ -17,13 +17,13 @@ namespace DataProtection1
 	{
 		public struct EncryptionData
 		{
-			public Dictionary<int, int> IP { get; set; }
-			public Dictionary<int, int> InvIP { get; set; }
-			public Dictionary<int, (int, int?)> Expansion { get; set; }
-			public Dictionary<int, int> P { get; set; }
-			public Dictionary<int, int> PC1 { get; set; }
-			public Dictionary<int, int> PC2 { get; set; }
-			public Dictionary<int, int> LSi { get; set; }
+			public int[] IP { get; set; }
+			public int[] InvIP { get; set; }
+			public (int, int?)[] Expansion { get; set; }
+			public int[] P { get; set; }
+			public int[] PC1 { get; set; }
+			public int[] PC2 { get; set; }
+			public int[] LSi { get; set; }
 			public int[][] S { get; set; }
 
 			public ulong K { get; set; }
@@ -61,12 +61,12 @@ namespace DataProtection1
 		{
 			ulong shuffledBlock = 0;
 
-			for (int i = 0; i < _encryptionData.IP.Count; i++)
+			for (int i = 0; i < _encryptionData.IP.Length; i++)
 			{
 				bool bit = (block & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.IP[i + 1] - 1;
+					int bitPosition = _encryptionData.IP[i] - 1;
 					shuffledBlock |= 1ul << 63 - bitPosition;
 				}
 			}
@@ -88,12 +88,12 @@ namespace DataProtection1
 			ulong concat = longL | longR;
 			ulong shuffledConcat = 0;
 
-			for (int i = 0; i < _encryptionData.InvIP.Count; i++)
+			for (int i = 0; i < _encryptionData.InvIP.Length; i++)
 			{
 				bool bit = (concat & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.InvIP[i + 1] - 1;
+					int bitPosition = _encryptionData.InvIP[i] - 1;
 					shuffledConcat |= 1ul << 63 - bitPosition;
 				}
 			}
@@ -111,12 +111,12 @@ namespace DataProtection1
 		{
 			ulong shuffledBlock = 0;
 
-			for (int i = 0; i < _encryptionData.InvIP.Count; i++)
+			for (int i = 0; i < _encryptionData.InvIP.Length; i++)
 			{
 				bool bit = (block & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.InvIP[i + 1] - 1;
+					int bitPosition = _encryptionData.InvIP[i] - 1;
 					shuffledBlock |= 1ul << 63 - bitPosition;
 				}
 			}
@@ -138,12 +138,12 @@ namespace DataProtection1
 			ulong concat = longL | longR;
 			ulong shuffledConcat = 0;
 
-			for (int i = 0; i < _encryptionData.IP.Count; i++)
+			for (int i = 0; i < _encryptionData.IP.Length; i++)
 			{
 				bool bit = (concat & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.IP[i + 1] - 1;
+					int bitPosition = _encryptionData.IP[i] - 1;
 					shuffledConcat |= 1ul << 63 - bitPosition;
 				}
 			}
@@ -204,12 +204,12 @@ namespace DataProtection1
 
 			ulong k0 = 0;
 
-			for (int i = 0; i < _encryptionData.PC1.Count; i++)
+			for (int i = 0; i < _encryptionData.PC1.Length; i++)
 			{
 				bool bit = (_encryptionData.K & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.PC1[i + 1] - 1;
+					int bitPosition = _encryptionData.PC1[i] - 1;
 					k0 |= 1ul << 63 - bitPosition;
 				}
 			}
@@ -221,20 +221,20 @@ namespace DataProtection1
 
 			for (int i = 0; i < 16; i++)
 			{
-				l <<= _encryptionData.LSi[i + 1];
-				r <<= _encryptionData.LSi[i + 1];
+				l <<= _encryptionData.LSi[i];
+				r <<= _encryptionData.LSi[i];
 
 				ulong longL = (ulong)l << 32;
 				ulong longR = r;
 				ulong concat = longL | longR;
 				ulong shuffledConcat = 0;
 
-				for (int j = 0; j < _encryptionData.PC2.Count; j++)
+				for (int j = 0; j < _encryptionData.PC2.Length; j++)
 				{
 					bool bit = (concat & (1ul << 63 - j)) != 0;
 					if (bit)
 					{
-						int bitPosition = _encryptionData.PC2[j + 1] - 1;
+						int bitPosition = _encryptionData.PC2[j] - 1;
 						shuffledConcat |= 1ul << 63 - bitPosition;
 					}
 				}
@@ -249,9 +249,9 @@ namespace DataProtection1
 		{
 			ulong expanded = 0;
 
-			for (int i = 0; i < _encryptionData.Expansion.Count; i++)
+			for (int i = 0; i < _encryptionData.Expansion.Length; i++)
 			{
-				(int, int?) shufflePoses = _encryptionData.Expansion[i + 1];
+				(int, int?) shufflePoses = _encryptionData.Expansion[i];
 				int bitPosition = shufflePoses.Item1 - 1;
 				bool bit = (r & (1 << 31 - i)) != 0;
 				if (bit)
@@ -314,12 +314,12 @@ namespace DataProtection1
 			uint sResInt = MemoryMarshal.Read<uint>(sRes);
 			uint result = 0;
 
-			for (int i = 0; i < _encryptionData.P.Count; i++)
+			for (int i = 0; i < _encryptionData.P.Length; i++)
 			{
 				bool bit = (sResInt & (1u << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.P[i + 1] - 1;
+					int bitPosition = _encryptionData.P[i] - 1;
 					result |= 1u << 63 - bitPosition;
 				}
 			}
