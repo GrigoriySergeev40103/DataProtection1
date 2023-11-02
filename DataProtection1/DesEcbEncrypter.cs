@@ -312,8 +312,19 @@ namespace DataProtection1
 				sRes[i] <<= 4;
 			}
 
-			// WRONG(not the way we need)
-			uint sResInt = MemoryMarshal.Read<uint>(sRes);
+			// CORRECT
+			uint sResInt = 0;
+			uint toConcat = sRes[0];
+			int shiftBys = 32 - 8;
+			sResInt |= (toConcat << shiftBys);
+
+			for (int i = 1; i < 8; i++)
+			{
+				toConcat = sRes[i];
+				shiftBys = 24 - (i * 4);
+				sResInt |= (toConcat << shiftBys);
+			}
+
 			uint result = 0;
 
 			for (int i = 0; i < _encryptionData.P.Length; i++)
