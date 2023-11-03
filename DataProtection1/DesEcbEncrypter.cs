@@ -119,28 +119,39 @@ namespace DataProtection1
 
 		protected string DecryptBlock(ulong block)
 		{
+			block = 0xC0B7A8D05F3A829C;
+
 			ulong shuffledBlock = 0;
 
-			for (int i = 0; i < _encryptionData.InvIP.Length; i++)
+			// Correct
+			for (int i = 0; i < _encryptionData.IP.Length; i++)
 			{
 				bool bit = (block & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.InvIP[i] - 1;
+					int bitPosition = _encryptionData.IP[i] - 1;
 					shuffledBlock |= 1ul << 63 - bitPosition;
 				}
 			}
 
+			// Correct
 			uint l = (uint)(shuffledBlock >> 32);
 			uint r = (uint)(shuffledBlock & uint.MaxValue);
 			ulong[] keys = FormKeys();
 
+			// WRONG
 			for (int i = 0; i < 16; i++)
 			{
-				uint oldR = r;
-				r = l;
-				l = F(r, keys[15 - i]);
-				l ^= oldR;
+				uint res = l ^ F(r, keys[15 - i]);
+				l = res;
+				if (i != 15)
+					(l, r) = (r, l);
+
+				//uint oldR = r;
+				//r = F(r, keys[i]);
+				//uint oldL = l;
+				//l = oldR;
+				//r ^= oldL;
 			}
 
 			ulong longL = (ulong)l << 32;
@@ -148,12 +159,12 @@ namespace DataProtection1
 			ulong concat = longL | longR;
 			ulong shuffledConcat = 0;
 
-			for (int i = 0; i < _encryptionData.IP.Length; i++)
+			for (int i = 0; i < _encryptionData.InvIP.Length; i++)
 			{
 				bool bit = (concat & (1ul << 63 - i)) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.IP[i] - 1;
+					int bitPosition = _encryptionData.InvIP[i] - 1;
 					shuffledConcat |= 1ul << 63 - bitPosition;
 				}
 			}
