@@ -61,6 +61,7 @@ namespace DataProtection1
 		{
 			ulong shuffledBlock = 0;
 
+			// Correct
 			for (int i = 0; i < _encryptionData.IP.Length; i++)
 			{
 				bool bit = (block & (1ul << 63 - i)) != 0;
@@ -71,15 +72,17 @@ namespace DataProtection1
 				}
 			}
 
+			// Correct
 			uint l = (uint)(shuffledBlock >> 32);
 			uint r = (uint)(shuffledBlock & uint.MaxValue);
 			ulong[] keys = FormKeys();
 
 			for (int i = 0; i < 16; i++)
 			{
+				uint oldR = r;
 				r = F(r, keys[i]);
 				uint oldL = l;
-				l = r;
+				l = oldR;
 				r ^= oldL;
 			}
 
@@ -204,6 +207,7 @@ namespace DataProtection1
 
 			ulong k0 = 0;
 
+			// Seems correct too
 			for (int i = 0; i < _encryptionData.PC1.Length; i++)
 			{
 				bool bit = (_encryptionData.K & (1ul << 64 - _encryptionData.PC1[i])) != 0;
@@ -249,6 +253,7 @@ namespace DataProtection1
 		{
 			ulong expanded = 0;
 
+			// Also correct
 			for (int i = 0; i < _encryptionData.Expansion.Length; i++)
 			{
 				(int, int?) shufflePoses = _encryptionData.Expansion[i];
@@ -267,7 +272,7 @@ namespace DataProtection1
 
 			expanded ^= k;
 
-			//(CORRECT ALGO)
+			//CORRECT
 			Span<byte> s = stackalloc byte[8];
 			for (int i = 0; i < 8; i++)
 			{
@@ -308,7 +313,7 @@ namespace DataProtection1
 				sL >>= 4;
 
 				// Check value retrieval from S(are indexes proper here?)
-				sRes[i] = (byte)_encryptionData.S[sL][sK];
+				sRes[i] = (byte)_encryptionData.S[sK][sL - 1];
 				sRes[i] <<= 4;
 			}
 
