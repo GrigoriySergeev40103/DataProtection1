@@ -59,7 +59,7 @@ namespace DataProtection1
 
 		protected string EncryptBlock(ulong block)
 		{
-			block = 0x123456ABCD132536;
+			//block = 0x123456ABCD132536;
 			ulong shuffledBlock = 0;
 
 			// Correct
@@ -119,7 +119,7 @@ namespace DataProtection1
 
 		protected string DecryptBlock(ulong block)
 		{
-			block = 0xC0B7A8D05F3A829C;
+			//block = 0xC0B7A8D05F3A829C;
 
 			ulong shuffledBlock = 0;
 
