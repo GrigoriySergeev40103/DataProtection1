@@ -81,11 +81,16 @@ namespace DataProtection1
 			// WRONG
 			for (int i = 0; i < 16; i++)
 			{
-				uint oldR = r;
-				r = F(r, keys[i]);
-				uint oldL = l;
-				l = oldR;
-				r ^= oldL;
+				uint res = l ^ F(r, keys[i]);
+				l = res;
+				if (i != 15)
+					(l, r) = (r, l);
+
+				//uint oldR = r;
+				//r = F(r, keys[i]);
+				//uint oldL = l;
+				//l = oldR;
+				//r ^= oldL;
 			}
 
 			ulong longL = (ulong)l << 32;
