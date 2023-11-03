@@ -84,6 +84,7 @@ namespace DataProtection1
 
 		protected string ProcessBlock(ulong block, ulong[] keys)
 		{
+			//block = 0x123456ABCD132536;
 			ulong shuffledBlock = 0;
 
 			// Correct
@@ -106,16 +107,10 @@ namespace DataProtection1
 			{
 				uint res = l ^ F(r, keys[i]);
 				l = res;
-				if (i != 15)
-					(l, r) = (r, l);
-
-				//uint oldR = r;
-				//r = F(r, keys[i]);
-				//uint oldL = l;
-				//l = oldR;
-				//r ^= oldL;
+				(l, r) = (r, l);
 			}
 
+			(l, r) = (r, l);
 			ulong longL = (ulong)l << 32;
 			ulong longR = r;
 			ulong concat = longL | longR;
