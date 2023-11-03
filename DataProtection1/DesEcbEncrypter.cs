@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.Xml;
 using System.Text.Json;
 using System.IO;
+using System.Diagnostics;
 
 namespace DataProtection1
 {
@@ -55,7 +56,11 @@ namespace DataProtection1
 			{
 				byte[] bytes = Encoding.Unicode.GetBytes(toEncrypt.Substring(i, 4));
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				result.Append(ProcessBlock(block, _keys));
+				Stopwatch sw = Stopwatch.StartNew();
+				string toAppend = ProcessBlock(0x123456ABCD132536, _keys);
+				sw.Stop();
+				File.WriteAllText("EncryptionSpeed.txt", $"{sw.ElapsedMilliseconds} ms");
+				result.Append(toAppend);
 			}
 
 			return result.ToString();
@@ -76,7 +81,7 @@ namespace DataProtection1
 			{
 				byte[] bytes = Encoding.Unicode.GetBytes(toDecrypt.Substring(i, 4));
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				result.Append(ProcessBlock(block, _inverseKeys));
+				result.Append(ProcessBlock(0xC0B7A8D05F3A829C, _inverseKeys));
 			}
 
 			return result.ToString();
