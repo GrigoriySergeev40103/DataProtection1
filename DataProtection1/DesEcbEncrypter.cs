@@ -78,6 +78,7 @@ namespace DataProtection1
 			uint r = (uint)(shuffledBlock & uint.MaxValue);
 			ulong[] keys = FormKeys();
 
+			// WRONG
 			for (int i = 0; i < 16; i++)
 			{
 				uint oldR = r;
@@ -281,7 +282,7 @@ namespace DataProtection1
 				}
 			}
 
-			expanded ^= k;
+			expanded ^= k; // CORRECT
 
 			//CORRECT
 			Span<byte> s = stackalloc byte[8];
@@ -323,12 +324,12 @@ namespace DataProtection1
 
 				sL >>= 4;
 
-				// Check value retrieval from S(are indexes proper here?)
-				sRes[i] = (byte)_encryptionData.S[sK][sL - 1];
+				// CORRECT
+				sRes[i] = (byte)_encryptionData.S[sK + i * 4][sL];
 				sRes[i] <<= 4;
 			}
 
-			// CORRECT
+			// CORRECT BUT TO REFACTOR
 			uint sResInt = 0;
 			uint toConcat = sRes[0];
 			int shiftBys = 32 - 8;
@@ -341,15 +342,20 @@ namespace DataProtection1
 				sResInt |= (toConcat << shiftBys);
 			}
 
+			toConcat = sRes[7];
+			toConcat >>= 4;
+			sResInt |= (toConcat << 0);
+
 			uint result = 0;
 
-			for (int i = 0; i < _encryptionData.P.Length; i++)
+			for (int j = 0; j < _encryptionData.P.Length; j++)
 			{
-				bool bit = (sResInt & (1u << 63 - i)) != 0;
+				bool bit = (sResInt & (1ul << 32 - _encryptionData.P[j])) != 0;
 				if (bit)
 				{
-					int bitPosition = _encryptionData.P[i] - 1;
-					result |= 1u << 63 - bitPosition;
+					int bitPosition = j;
+					int shiftBy = 31 - bitPosition;
+					result |= 1u << shiftBy;
 				}
 			}
 
