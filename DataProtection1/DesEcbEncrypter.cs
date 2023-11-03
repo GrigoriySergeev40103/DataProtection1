@@ -30,10 +30,35 @@ namespace DataProtection1
 		}
 
 		protected EncryptionData _encryptionData;
+		protected ulong[] _keys;
+		protected ulong[] _inverseKeys;
 
 		public DesEcbEncrypter(EncryptionData encryptionData)
 		{
 			_encryptionData = encryptionData;
+			_keys = FormKeys();
+			_inverseKeys = _keys.Reverse().ToArray();
+		}
+
+		public string Encrypt(string toEncrypt)
+		{
+			int remainder = toEncrypt.Length % 4;
+			toEncrypt = remainder switch
+			{
+				0 => toEncrypt,
+				_ => toEncrypt + new string(' ', 4 - remainder)
+			};
+
+			StringBuilder result = new(toEncrypt.Length);
+
+			for (int i = 0; i < toEncrypt.Length; i += 4)
+			{
+				byte[] bytes = Encoding.Unicode.GetBytes(toEncrypt.Substring(i, 4));
+				ulong block = MemoryMarshal.Read<ulong>(bytes);
+				result.Append(ProcessBlock(block, _keys));
+			}
+
+			return result.ToString();
 		}
 
 		public string Decrypt(string toDecrypt)
@@ -51,15 +76,14 @@ namespace DataProtection1
 			{
 				byte[] bytes = Encoding.Unicode.GetBytes(toDecrypt.Substring(i, 4));
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				result.Append(DecryptBlock(block));
+				result.Append(ProcessBlock(block, _inverseKeys));
 			}
 
 			return result.ToString();
 		}
 
-		protected string EncryptBlock(ulong block)
+		protected string ProcessBlock(ulong block, ulong[] keys)
 		{
-			//block = 0x123456ABCD132536;
 			ulong shuffledBlock = 0;
 
 			// Correct
@@ -76,9 +100,8 @@ namespace DataProtection1
 			// Correct
 			uint l = (uint)(shuffledBlock >> 32);
 			uint r = (uint)(shuffledBlock & uint.MaxValue);
-			ulong[] keys = FormKeys();
 
-			// WRONG
+			// CORRECT
 			for (int i = 0; i < 16; i++)
 			{
 				uint res = l ^ F(r, keys[i]);
@@ -117,87 +140,6 @@ namespace DataProtection1
 			return result;
 		}
 
-		protected string DecryptBlock(ulong block)
-		{
-			//block = 0xC0B7A8D05F3A829C;
-
-			ulong shuffledBlock = 0;
-
-			// Correct
-			for (int i = 0; i < _encryptionData.IP.Length; i++)
-			{
-				bool bit = (block & (1ul << 63 - i)) != 0;
-				if (bit)
-				{
-					int bitPosition = _encryptionData.IP[i] - 1;
-					shuffledBlock |= 1ul << 63 - bitPosition;
-				}
-			}
-
-			// Correct
-			uint l = (uint)(shuffledBlock >> 32);
-			uint r = (uint)(shuffledBlock & uint.MaxValue);
-			ulong[] keys = FormKeys();
-
-			// WRONG
-			for (int i = 0; i < 16; i++)
-			{
-				uint res = l ^ F(r, keys[15 - i]);
-				l = res;
-				if (i != 15)
-					(l, r) = (r, l);
-
-				//uint oldR = r;
-				//r = F(r, keys[i]);
-				//uint oldL = l;
-				//l = oldR;
-				//r ^= oldL;
-			}
-
-			ulong longL = (ulong)l << 32;
-			ulong longR = r;
-			ulong concat = longL | longR;
-			ulong shuffledConcat = 0;
-
-			for (int i = 0; i < _encryptionData.InvIP.Length; i++)
-			{
-				bool bit = (concat & (1ul << 63 - i)) != 0;
-				if (bit)
-				{
-					int bitPosition = _encryptionData.InvIP[i] - 1;
-					shuffledConcat |= 1ul << 63 - bitPosition;
-				}
-			}
-
-			Span<byte> bytes = stackalloc byte[8];
-
-			MemoryMarshal.Write(bytes, ref shuffledConcat);
-
-			string result = Encoding.Unicode.GetString(bytes);
-
-			return result;
-		}
-
-		public string Encrypt(string toEncrypt)
-		{
-			int remainder = toEncrypt.Length % 4;
-			toEncrypt = remainder switch
-			{
-				0 => toEncrypt,
-				_ => toEncrypt + new string(' ', 4 - remainder)
-			};
-
-			StringBuilder result = new(toEncrypt.Length);
-
-			for (int i = 0; i < toEncrypt.Length; i +=4)
-			{
-				byte[] bytes = Encoding.Unicode.GetBytes(toEncrypt.Substring(i, 4));
-				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				result.Append(EncryptBlock(block));
-			}
-
-			return result.ToString();
-		}
 
 		public bool IsValidMessage(string message) => true;
 
