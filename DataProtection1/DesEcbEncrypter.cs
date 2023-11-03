@@ -84,7 +84,6 @@ namespace DataProtection1
 
 		protected string ProcessBlock(ulong block, ulong[] keys)
 		{
-			//block = 0x123456ABCD132536;
 			ulong shuffledBlock = 0;
 
 			// Correct
@@ -288,7 +287,7 @@ namespace DataProtection1
 			int shiftBys = 32 - 8;
 			sResInt |= (toConcat << shiftBys);
 
-			for (int i = 1; i < 8; i++)
+			for (int i = 1; i < 7; i++)
 			{
 				toConcat = sRes[i];
 				shiftBys = 24 - (i * 4);
