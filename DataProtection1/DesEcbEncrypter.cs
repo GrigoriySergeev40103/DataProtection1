@@ -59,6 +59,7 @@ namespace DataProtection1
 
 		protected string EncryptBlock(ulong block)
 		{
+			block = 0x123456ABCD132536;
 			ulong shuffledBlock = 0;
 
 			// Correct
@@ -201,13 +202,14 @@ namespace DataProtection1
 			await File.WriteAllTextAsync(fileName, saveContent);
 		}
 
+		// CORRECT
 		protected ulong[] FormKeys()
 		{
 			ulong[] keys = new ulong[16];
 
 			ulong k0 = 0;
 
-			// Seems correct too
+			// Correct for sure
 			for (int i = 0; i < _encryptionData.PC1.Length; i++)
 			{
 				bool bit = (_encryptionData.K & (1ul << 64 - _encryptionData.PC1[i])) != 0;
@@ -225,21 +227,30 @@ namespace DataProtection1
 
 			for (int i = 0; i < 16; i++)
 			{
-				l <<= _encryptionData.LSi[i];
-				r <<= _encryptionData.LSi[i];
+				// CORRECT
+				uint t = l >> (32 - _encryptionData.LSi[i]);
+				t <<= 4;
+				l = l << _encryptionData.LSi[i] | t;
 
+				t = r >> (32 - _encryptionData.LSi[i]);
+				t <<= 4;
+				r = r << _encryptionData.LSi[i] | t;
+
+				// CORRECT
 				ulong longL = (ulong)l << 32;
-				ulong longR = r;
+				ulong longR = ((ulong)r) << 4;
 				ulong concat = longL | longR;
 				ulong shuffledConcat = 0;
 
+				// CORRECT
 				for (int j = 0; j < _encryptionData.PC2.Length; j++)
 				{
 					bool bit = (concat & (1ul << 64 - _encryptionData.PC2[j])) != 0;
 					if (bit)
 					{
 						int bitPosition = j;
-						shuffledConcat |= 1ul << 63 - bitPosition;
+						int shiftBy = 63 - bitPosition;
+						shuffledConcat |= 1ul << shiftBy;
 					}
 				}
 
