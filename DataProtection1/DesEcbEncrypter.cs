@@ -33,6 +33,14 @@ namespace DataProtection1
 		protected ulong[] _keys;
 		protected ulong[] _inverseKeys;
 
+		public async static Task<DesEcbEncrypter> FromFile(string fileName)
+		{
+			EncryptionData encryptionData = JsonSerializer.Deserialize<EncryptionData>(await File.ReadAllTextAsync(fileName));
+			DesEcbEncrypter result = new(encryptionData);
+
+			return result;
+		}
+
 		public DesEcbEncrypter(EncryptionData encryptionData)
 		{
 			_encryptionData = encryptionData;
@@ -141,15 +149,20 @@ namespace DataProtection1
 
 		public async Task LoadFromFileAsync(string fileName)
 		{
+			JsonSerializerOptions jsonOptions = new()
+			{
+				IncludeFields = true
+			};
+
 			FileStream jsonStream = File.Open(fileName, FileMode.Open);
-			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream);
+			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream, jsonOptions);
 		}
 
 		public async Task SaveToFileAsync(string fileName)
 		{
 			JsonSerializerOptions jsonOptions = new()
 			{
-				WriteIndented = true
+				IncludeFields = true
 			};
 
 			string saveContent = JsonSerializer.Serialize(_encryptionData, jsonOptions);

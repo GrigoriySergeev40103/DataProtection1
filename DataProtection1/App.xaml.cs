@@ -32,18 +32,17 @@ namespace DataProtection1
 
 		App()
 		{
-			//string? pathToJson = TryGetPathToJsonKey();
-			//if (pathToJson == null)
-			//{
-			//	Shutdown();
-			//	return; // return so analyzer is not mad for *possible*(at least I think it's not?) null use of encrypter later
-			//}
+			string? pathToJson = TryGetPathToJsonKey();
+			if (pathToJson == null)
+			{
+				Shutdown();
+				return; // return so analyzer is not mad for *possible*(at least I think it's not?) null use of encrypter later
+			}
 
 			DesEcbEncrypter.EncryptionData encryptionData = EncrypterKeyGenerator.GenerateEcbEncrypter();
-			DesEcbEncrypter ecbEncrypter = new DesEcbEncrypter(encryptionData);
-			//GammaEncrypter gammaEncrypter = GammaEncrypter.FromFile(pathToJson).Result;
+			DesEcbEncrypter ecbEncrypter = new(encryptionData);
 
-			var mainWindow = new DataProtection1.MainWindow(ecbEncrypter, "cockAndBalls");
+			var mainWindow = new DataProtection1.MainWindow(ecbEncrypter, pathToJson);
 			mainWindow.Show();
 			mainWindow.Activate();
 		}
