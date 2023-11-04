@@ -51,9 +51,10 @@ namespace DataProtection1
 
 			StringBuilder result = new(toEncrypt.Length);
 
+			Span<byte> bytes = stackalloc byte[8];
 			for (int i = 0; i < toEncrypt.Length; i += 4)
 			{
-				byte[] bytes = Encoding.Unicode.GetBytes(toEncrypt.Substring(i, 4));
+				Encoding.Unicode.GetBytes(toEncrypt.AsSpan(i, 4), bytes);
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
 				result.Append(ProcessBlock(block, _keys));
 			}
@@ -72,9 +73,10 @@ namespace DataProtection1
 
 			StringBuilder result = new(toDecrypt.Length);
 
+			Span<byte> bytes = stackalloc byte[8];
 			for (int i = 0; i < toDecrypt.Length; i += 4)
 			{
-				byte[] bytes = Encoding.Unicode.GetBytes(toDecrypt.Substring(i, 4));
+				Encoding.Unicode.GetBytes(toDecrypt.AsSpan(i, 4), bytes);
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
 				result.Append(ProcessBlock(block, _inverseKeys));
 			}
