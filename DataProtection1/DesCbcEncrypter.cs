@@ -108,6 +108,7 @@ namespace DataProtection1
 				ulong decyphered = ProcessBlock(block, _inverseKeys);
 				decyphered ^= _c;
 				_c = block;
+				MemoryMarshal.Write(bytes, ref decyphered);
 
 				result.Append(Encoding.Unicode.GetString(bytes));
 			}

@@ -39,8 +39,8 @@ namespace DataProtection1
 				return; // return so analyzer is not mad for *possible*(at least I think it's not?) null use of encrypter later
 			}
 
-			DesEcbEncrypter.EncryptionData encryptionData = EncrypterKeyGenerator.GenerateEcbEncrypter();
-			DesEcbEncrypter ecbEncrypter = new(encryptionData);
+			DesCbcEncrypter.EncryptionData encryptionData = EncrypterKeyGenerator.GenerateCbcEncrypter();
+			DesCbcEncrypter ecbEncrypter = new(encryptionData);
 
 			var mainWindow = new DataProtection1.MainWindow(ecbEncrypter, pathToJson);
 			mainWindow.Show();
