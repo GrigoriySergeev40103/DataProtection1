@@ -157,11 +157,11 @@ namespace DataProtection1
 			return result;
 		}
 
-		public static DesCbcEncrypter.EncryptionData GenerateCbcEncrypter()
+		public static (DesCbcEncrypter.EncryptionData, DesCbcEncrypter.CbcData) GenerateCbcEncrypter()
 		{
-			DesCbcEncrypter.EncryptionData result = new();
+			(DesCbcEncrypter.EncryptionData, DesCbcEncrypter.CbcData) result = new();
 
-			result.IP = new int[64]
+			result.Item1.IP = new int[64]
 			{
 				40, 8, 48, 16, 56, 24, 64, 32, 39, 7, 47, 15, 55, 23, 63, 31,
 				38, 6, 46, 14, 54, 22, 62, 30, 37, 5, 45, 13, 53, 21, 61, 29,
@@ -169,7 +169,7 @@ namespace DataProtection1
 				34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41,  9, 49, 17, 57, 25
 			};
 
-			result.InvIP = new int[64]
+			result.Item1.InvIP = new int[64]
 			{
 				58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4,
 				62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8,
@@ -177,18 +177,18 @@ namespace DataProtection1
 				61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7,
 			};
 
-			result.P = new int[32]
+			result.Item1.P = new int[32]
 			{
 				16, 7, 20, 21, 29, 12, 28, 17, 1,  15, 23, 26, 5,  18, 31, 10,
 				2,  8, 24, 14, 32, 27, 3,  9,  19, 13, 30, 6,  22, 11, 4,  25
 			};
 
-			result.LSi = new int[16]
+			result.Item1.LSi = new int[16]
 			{
 				1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
 			};
 
-			result.Expansion = new (int, int?)[32]
+			result.Item1.Expansion = new (int, int?)[32]
 			{
 				(2, 48 ),
 				(3, null),
@@ -224,7 +224,7 @@ namespace DataProtection1
 				(1, 47)
 			};
 
-			result.PC1 = new int[56]
+			result.Item1.PC1 = new int[56]
 			{
 				57, 49, 41, 33, 25, 17, 9,  1,  58, 50, 42, 34, 26, 18,
 				10,  2, 59, 51, 43, 35, 27, 19, 11, 3,  60, 52, 44, 36,
@@ -232,21 +232,21 @@ namespace DataProtection1
 				14,  6, 61, 53, 45, 37, 29, 21, 13, 5,  28, 20, 12,  4
 			};
 
-			result.PC2 = new int[48]
+			result.Item1.PC2 = new int[48]
 			{
 				14, 17, 11, 24, 1,  5,  3,  28, 15, 6,  21, 10,  23, 19, 12, 4,
 				26, 8 , 16, 7,  27, 20, 13, 2,  41, 52, 31, 37, 47, 55, 30, 40,
 				51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32
 			};
 
-			result.S = S;
+			result.Item1.S = S;
 
 			//result.K = (ulong)Random.Shared.Next(1, int.MaxValue) + (ulong)Random.Shared.Next(1, int.MaxValue);
-			result.K = 0xAABB09182736CCDD;
+			result.Item1.K = 0xAABB09182736CCDD;
 
-			result.A = 33;
-			result.C = 23;
-			result.T0 = 21;
+			result.Item2.A = 33;
+			result.Item2.C = 23;
+			result.Item2.T0 = 21;
 
 			return result;
 		}

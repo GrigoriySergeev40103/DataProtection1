@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -9,53 +7,71 @@ using System.Threading.Tasks;
 
 namespace DataProtection1
 {
-	internal class DesCbcEncrypter : DesEcbEncrypter
+	internal class DesCfbEncrypter : DesEcbEncrypter
 	{
-		public struct CbcData
+		public struct CfbData
 		{
 			public int T0 { get; set; }
 			public int A { get; set; }
 			public int C { get; set; }
+
+			public int KBits { get; set; }
 		}
 
-		protected CbcData _cbcData;
+		protected CfbData _cfbData;
 		protected ulong _c0;
 		protected ulong _c;
 
-		public async static new Task<DesCbcEncrypter> FromFile(string fileName)
+		public async static new Task<DesCfbEncrypter> FromFile(string fileName)
 		{
 			JsonSerializerOptions jsonOptions = new()
 			{
 				IncludeFields = true
 			};
 
-			(EncryptionData, CbcData) desCbcData = JsonSerializer.Deserialize<(EncryptionData, CbcData)>(await File.ReadAllTextAsync(fileName), jsonOptions);
-			DesCbcEncrypter result = new(desCbcData.Item1, desCbcData.Item2);
+			(EncryptionData, CfbData) desCbcData = JsonSerializer.Deserialize<(EncryptionData, CfbData)>(await File.ReadAllTextAsync(fileName), jsonOptions);
+			DesCfbEncrypter result = new(desCbcData.Item1, desCbcData.Item2);
 
 			return result;
 		}
 
-		public DesCbcEncrypter(EncryptionData encryptionData, CbcData cbcData) : base(encryptionData)
+		public DesCfbEncrypter(EncryptionData encryptionData, CfbData cbcData) : base(encryptionData)
 		{
-			_cbcData = cbcData;
+			_cfbData = cbcData;
 
-			int temp = _cbcData.T0;
+			int temp = _cfbData.T0;
 			for (int i = 0; i < 8; i++)
 			{
 				_c0 <<= 8;
 				_c0 |= (byte)temp;
-				temp = (_cbcData.A * temp + _cbcData.C) % 256;
+				temp = (_cfbData.A * temp + _cfbData.C) % 256;
 			}
 		}
 
 		public override string Encrypt(string toEncrypt)
 		{
-			int remainder = toEncrypt.Length % 4;
-			toEncrypt = remainder switch
-			{
-				0 => toEncrypt,
-				_ => toEncrypt + new string(' ', 4 - remainder)
-			};
+			int wholeBytes = _cfbData.KBits / 8;
+			int additionalBits = _cfbData.KBits - wholeBytes * 8;
+
+			// * 2 since char is 2 bytes
+			Span<byte> strBytes = stackalloc byte[toEncrypt.Length * 2];
+			Encoding.Unicode.GetBytes(toEncrypt, strBytes);
+
+			int numOfBlocks = (int)MathF.Ceiling((float)strBytes.Length * 8 / _cfbData.KBits);
+			Span<ulong> blocks = stackalloc ulong[numOfBlocks];
+
+			Span<byte> blockVal = stackalloc byte[wholeBytes + 1];
+			for (int i = 0; i < numOfBlocks; i++)
+			{	
+				strBytes[..wholeBytes].CopyTo(blockVal);
+				byte toAdd = strBytes[wholeBytes];
+				toAdd >>= 8 - additionalBits;
+				toAdd <<= 8 - additionalBits;
+
+				blockVal[wholeBytes] = toAdd;
+
+				blocks[i] = MemoryMarshal.Read<ulong>(blockVal);
+			}
 
 			StringBuilder result = new(toEncrypt.Length);
 
@@ -63,11 +79,15 @@ namespace DataProtection1
 			_c = _c0;
 			for (int i = 0; i < toEncrypt.Length; i += 4)
 			{
+				_c <<= _cfbData.KBits;
+				ulong encrypted = ProcessBlock(_c, _keys);
+				encrypted >>= 64 - _cfbData.KBits;
+
 				Encoding.Unicode.GetBytes(toEncrypt.AsSpan(i, 4), bytes);
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
+				block >>= 64 - _cfbData.KBits;
 				block ^= _c;
 
-				ulong encrypted = ProcessBlock(block, _keys);
 				_c = encrypted;
 				MemoryMarshal.Write(bytes, ref encrypted);
 
@@ -124,7 +144,7 @@ namespace DataProtection1
 				IncludeFields = true
 			};
 
-			string saveContent = JsonSerializer.Serialize((_encryptionData, _cbcData), jsonOptions);
+			string saveContent = JsonSerializer.Serialize((_encryptionData, _cfbData), jsonOptions);
 
 			await File.WriteAllTextAsync(fileName, saveContent);
 		}

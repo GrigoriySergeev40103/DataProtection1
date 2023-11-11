@@ -48,7 +48,7 @@ namespace DataProtection1
 			_inverseKeys = _keys.Reverse().ToArray();
 		}
 
-		public string Encrypt(string toEncrypt)
+		public virtual string Encrypt(string toEncrypt)
 		{
 			int remainder = toEncrypt.Length % 4;
 			toEncrypt = remainder switch
@@ -64,13 +64,19 @@ namespace DataProtection1
 			{
 				Encoding.Unicode.GetBytes(toEncrypt.AsSpan(i, 4), bytes);
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				result.Append(ProcessBlock(block, _keys));
+
+				ulong encrypted = ProcessBlock(block, _keys);
+
+				MemoryMarshal.Write(bytes, ref encrypted);
+
+				string str = Encoding.Unicode.GetString(bytes);
+				result.Append(str);
 			}
 
 			return result.ToString();
 		}
 
-		public string Decrypt(string toDecrypt)
+		public virtual string Decrypt(string toDecrypt)
 		{
 			int remainder = toDecrypt.Length % 4;
 			toDecrypt = remainder switch
@@ -86,13 +92,18 @@ namespace DataProtection1
 			{
 				Encoding.Unicode.GetBytes(toDecrypt.AsSpan(i, 4), bytes);
 				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				result.Append(ProcessBlock(block, _inverseKeys));
+
+				ulong decrypted = ProcessBlock(block, _inverseKeys);
+				MemoryMarshal.Write(bytes, ref decrypted);
+
+				string str = Encoding.Unicode.GetString(bytes);
+				result.Append(str);
 			}
 
 			return result.ToString();
 		}
 
-		protected string ProcessBlock(ulong block, ulong[] keys)
+		protected ulong ProcessBlock(ulong block, ulong[] keys)
 		{
 			ulong shuffledBlock = 0;
 
@@ -135,19 +146,13 @@ namespace DataProtection1
 				}
 			}
 
-			Span<byte> bytes = stackalloc byte[8];
-
-			MemoryMarshal.Write(bytes, ref shuffledConcat);
-
-			string result = Encoding.Unicode.GetString(bytes);
-
-			return result;
+			return shuffledConcat;
 		}
 
 
 		public bool IsValidMessage(string message) => true;
 
-		public async Task LoadFromFileAsync(string fileName)
+		public virtual async Task LoadFromFileAsync(string fileName)
 		{
 			JsonSerializerOptions jsonOptions = new()
 			{
@@ -158,7 +163,7 @@ namespace DataProtection1
 			_encryptionData = await JsonSerializer.DeserializeAsync<EncryptionData>(jsonStream, jsonOptions);
 		}
 
-		public async Task SaveToFileAsync(string fileName)
+		public virtual async Task SaveToFileAsync(string fileName)
 		{
 			JsonSerializerOptions jsonOptions = new()
 			{
@@ -232,7 +237,6 @@ namespace DataProtection1
 		{
 			ulong expanded = 0;
 
-			// Also correct
 			for (int i = 0; i < _encryptionData.Expansion.Length; i++)
 			{
 				(int, int?) shufflePoses = _encryptionData.Expansion[i];
@@ -249,9 +253,8 @@ namespace DataProtection1
 				}
 			}
 
-			expanded ^= k; // CORRECT
+			expanded ^= k;
 
-			//CORRECT
 			Span<byte> s = stackalloc byte[8];
 			for (int i = 0; i < 8; i++)
 			{
@@ -291,12 +294,10 @@ namespace DataProtection1
 
 				sL >>= 4;
 
-				// CORRECT
 				sRes[i] = (byte)_encryptionData.S[sK + i * 4][sL];
 				sRes[i] <<= 4;
 			}
 
-			// CORRECT BUT TO REFACTOR
 			uint sResInt = 0;
 			uint toConcat = sRes[0];
 			int shiftBys = 32 - 8;
