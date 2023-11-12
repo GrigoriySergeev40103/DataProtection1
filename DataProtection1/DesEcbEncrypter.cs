@@ -107,7 +107,6 @@ namespace DataProtection1
 		{
 			ulong shuffledBlock = 0;
 
-			// Correct
 			for (int i = 0; i < _encryptionData.IP.Length; i++)
 			{
 				bool bit = (block & (1ul << 63 - i)) != 0;
@@ -118,11 +117,9 @@ namespace DataProtection1
 				}
 			}
 
-			// Correct
 			uint l = (uint)(shuffledBlock >> 32);
 			uint r = (uint)(shuffledBlock & uint.MaxValue);
 
-			// CORRECT
 			for (int i = 0; i < 16; i++)
 			{
 				uint res = l ^ F(r, keys[i]);
@@ -149,7 +146,6 @@ namespace DataProtection1
 			return shuffledConcat;
 		}
 
-
 		public bool IsValidMessage(string message) => true;
 
 		public virtual async Task LoadFromFileAsync(string fileName)
@@ -175,14 +171,12 @@ namespace DataProtection1
 			await File.WriteAllTextAsync(fileName, saveContent);
 		}
 
-		// CORRECT
 		protected ulong[] FormKeys()
 		{
 			ulong[] keys = new ulong[16];
 
 			ulong k0 = 0;
 
-			// Correct for sure
 			for (int i = 0; i < _encryptionData.PC1.Length; i++)
 			{
 				bool bit = (_encryptionData.K & (1ul << 64 - _encryptionData.PC1[i])) != 0;
@@ -193,14 +187,12 @@ namespace DataProtection1
 				}
 			}
 
-			// Correct
 			// splitting 56 bits into 2 28 bit sets
 			uint l = (uint)((k0 >> 36) << 4);
 			uint r = (uint)((k0 << 28) >> 32);
 
 			for (int i = 0; i < 16; i++)
 			{
-				// CORRECT
 				uint t = l >> (32 - _encryptionData.LSi[i]);
 				t <<= 4;
 				l = l << _encryptionData.LSi[i] | t;
@@ -209,13 +201,11 @@ namespace DataProtection1
 				t <<= 4;
 				r = r << _encryptionData.LSi[i] | t;
 
-				// CORRECT
 				ulong longL = (ulong)l << 32;
 				ulong longR = ((ulong)r) << 4;
 				ulong concat = longL | longR;
 				ulong shuffledConcat = 0;
 
-				// CORRECT
 				for (int j = 0; j < _encryptionData.PC2.Length; j++)
 				{
 					bool bit = (concat & (1ul << 64 - _encryptionData.PC2[j])) != 0;
