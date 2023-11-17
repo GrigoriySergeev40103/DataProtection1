@@ -48,82 +48,163 @@ namespace DataProtection1
 			}
 		}
 
+		protected void DivideIntoKLongs(Span<ulong> destination, string toDivide)
+		{
+			int bitLength = toDivide.Length * 2 * 8;
+			Span<byte> bytes = stackalloc byte[toDivide.Length * 2];
+			int blockCount = (bitLength + _cfbData.KBits - 1) / _cfbData.KBits;
+
+			Encoding.Unicode.GetBytes(toDivide.AsSpan(0, toDivide.Length), bytes);
+
+			bool bit;
+			int shift = 0;
+			int indexByte = bytes.Length - 1;
+			for (int i = 0; i < blockCount; i++)
+			{
+				for (int j = 0; j < _cfbData.KBits; j++)
+				{
+					destination[i] <<= 1;
+					if (indexByte >= 0)
+					{
+						bit = ((byte)(bytes[indexByte]) & (1ul << 7 - shift)) != 0;
+						if (bit)
+							destination[i] |= 1ul;
+					}
+
+					if (shift == 7)
+					{
+						shift = 0;
+						indexByte--;
+					}
+					else
+						shift++;
+				}
+				destination[i] <<= 64 - _cfbData.KBits;
+			}
+		}
+
+		protected string AssembleFromKLongs(Span<ulong> longs)
+		{
+			int byteCount = longs.Length * _cfbData.KBits / 8;
+			bool bit;
+			Span<byte> bytes = stackalloc byte[byteCount];
+			int countBit = 0;
+			int indexByte = byteCount - 1;
+
+			for (int i = 0; i < longs.Length; i++)
+			{
+				int shift = 0;
+				for (int j = 0; j < _cfbData.KBits; j++)
+				{
+					if (countBit == 8)
+					{
+						countBit = 1;
+
+						--indexByte;
+					}
+					else
+						++countBit;
+
+					if (indexByte >= 0)
+					{
+						bytes[indexByte] <<= 1;
+						bit = (longs[i] & (1ul << 63 - shift)) != 0;
+						if (bit)
+							bytes[indexByte] |= 1;
+					}
+
+					++shift;
+				}
+
+			}
+
+			return Encoding.Unicode.GetString(bytes);
+		}
+
 		public override string Encrypt(string toEncrypt)
 		{
-			int wholeBytes = _cfbData.KBits / 8;
-			int additionalBits = _cfbData.KBits - wholeBytes * 8;
+			int blockCount = ((toEncrypt.Length * 2 * 8) + _cfbData.KBits - 1) / _cfbData.KBits;
+			Span<ulong> blocks = stackalloc ulong[blockCount];
+			DivideIntoKLongs(blocks, toEncrypt);
 
-			// * 2 since char is 2 bytes
-			Span<byte> strBytes = stackalloc byte[toEncrypt.Length * 2];
-			Encoding.Unicode.GetBytes(toEncrypt, strBytes);
-
-			int numOfBlocks = (int)MathF.Ceiling((float)strBytes.Length * 8 / _cfbData.KBits);
-			Span<ulong> blocks = stackalloc ulong[numOfBlocks];
-
-			Span<byte> blockVal = stackalloc byte[wholeBytes + 1];
-			for (int i = 0; i < numOfBlocks; i++)
-			{	
-				strBytes[..wholeBytes].CopyTo(blockVal);
-				byte toAdd = strBytes[wholeBytes];
-				toAdd >>= 8 - additionalBits;
-				toAdd <<= 8 - additionalBits;
-
-				blockVal[wholeBytes] = toAdd;
-
-				blocks[i] = MemoryMarshal.Read<ulong>(blockVal);
-			}
-
-			StringBuilder result = new(toEncrypt.Length);
-
-			Span<byte> bytes = stackalloc byte[8];
 			_c = _c0;
-			for (int i = 0; i < toEncrypt.Length; i += 4)
+			ulong outBlock;
+			ulong block;
+			bool bit;
+			int shift;
+
+			for (int i = 0; i < blocks.Length; i++)
 			{
-				_c <<= _cfbData.KBits;
-				ulong encrypted = ProcessBlock(_c, _keys);
-				encrypted >>= 64 - _cfbData.KBits;
+				shift = 63;
+				outBlock = 0;
 
-				Encoding.Unicode.GetBytes(toEncrypt.AsSpan(i, 4), bytes);
-				ulong block = MemoryMarshal.Read<ulong>(bytes);
-				block >>= 64 - _cfbData.KBits;
-				block ^= _c;
+				block = ProcessBlock(_c, _keys);
 
-				_c = encrypted;
-				MemoryMarshal.Write(bytes, ref encrypted);
+				for (int j = 0; j < _cfbData.KBits; j++)
+				{
+					bit = (block & (1ul << 63 - j)) != 0;
+					if (bit)
+						outBlock |= 1ul << shift;
+					shift--;
+				}
 
-				result.Append(Encoding.Unicode.GetString(bytes));
+				outBlock ^= blocks[i];
+
+				for (int j = 0; j < _cfbData.KBits; j++)
+				{
+					_c <<= 1;
+					bit = (outBlock & (1ul << 63 - j)) != 0;
+					if (bit)
+						_c |= 1ul;
+				}
+
+				blocks[i] = outBlock;
 			}
 
-			return result.ToString();
+			return AssembleFromKLongs(blocks);
 		}
 
 		public override string Decrypt(string toDecrypt)
 		{
-			int remainder = toDecrypt.Length % 4;
-			toDecrypt = remainder switch
-			{
-				0 => toDecrypt,
-				_ => toDecrypt + new string(' ', 4 - remainder)
-			};
+			int blockCount = ((toDecrypt.Length * 2 * 8) + _cfbData.KBits - 1) / _cfbData.KBits;
+			Span<ulong> blocks = stackalloc ulong[blockCount];
+			DivideIntoKLongs(blocks, toDecrypt);
 
-			StringBuilder result = new(toDecrypt.Length);
-
-			Span<byte> bytes = stackalloc byte[8];
 			_c = _c0;
-			for (int i = 0; i < toDecrypt.Length; i += 4)
+			ulong outBlock;
+			ulong block;
+			bool bit;
+			int shift;
+
+			for (int i = 0; i < blocks.Length; i++)
 			{
-				Encoding.Unicode.GetBytes(toDecrypt.AsSpan(i, 4), bytes);
-				ulong block = MemoryMarshal.Read<ulong>(bytes);
+				shift = 63;
+				outBlock = 0;
 
-				ulong decrypted = ProcessBlock(block, _inverseKeys);
-				decrypted ^= _c;
-				_c = block;
-				MemoryMarshal.Write(bytes, ref decrypted);
+				block = ProcessBlock(_c, _keys);
 
-				result.Append(Encoding.Unicode.GetString(bytes));
+				for (int j = 0; j < _cfbData.KBits; j++)
+				{
+					bit = (block & (1ul << 63 - j)) != 0;
+					if (bit)
+						outBlock |= 1ul << shift;
+					shift--;
+				}
+
+				outBlock ^= blocks[i];
+
+				for (int j = 0; j < _cfbData.KBits; j++)
+				{
+					_c <<= 1;
+					bit = (blocks[i] & (1ul << 63 - j)) != 0;
+					if (bit)
+						_c |= 1ul;
+				}
+
+				blocks[i] = outBlock;
 			}
 
-			return result.ToString();
+			return AssembleFromKLongs(blocks);
 		}
 
 		public override async Task LoadFromFileAsync(string fileName)
