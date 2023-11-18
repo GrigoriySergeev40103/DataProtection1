@@ -130,7 +130,6 @@ namespace DataProtection1
 			_c = _c0;
 			ulong outBlock;
 			ulong block;
-			bool bit;
 			int shift;
 
 			for (int i = 0; i < blocks.Length; i++)
@@ -142,7 +141,7 @@ namespace DataProtection1
 
 				for (int j = 0; j < _cfbData.KBits; j++)
 				{
-					bit = (block & (1ul << 63 - j)) != 0;
+					bool bit = (block & (1ul << 63 - j)) != 0;
 					if (bit)
 						outBlock |= 1ul << shift;
 					shift--;
@@ -153,7 +152,7 @@ namespace DataProtection1
 				for (int j = 0; j < _cfbData.KBits; j++)
 				{
 					_c <<= 1;
-					bit = (outBlock & (1ul << 63 - j)) != 0;
+					bool bit = (outBlock & (1ul << 63 - j)) != 0;
 					if (bit)
 						_c |= 1ul;
 				}
