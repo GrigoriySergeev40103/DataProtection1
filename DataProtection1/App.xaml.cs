@@ -40,7 +40,7 @@ namespace DataProtection1
 			//}
 
 			(DesCfbEncrypter.EncryptionData, DesCfbEncrypter.CfbData) encryptionData = EncrypterKeyGenerator.GenerateCfbEncrypter();
-			DesCfbEncrypter cfbEncrypter = new(encryptionData.Item1, encryptionData.Item2);
+			DesOfbEncrypter cfbEncrypter = new(encryptionData.Item1, encryptionData.Item2);
 
 			var mainWindow = new DataProtection1.MainWindow(cfbEncrypter, "cock");
 			mainWindow.Show();
